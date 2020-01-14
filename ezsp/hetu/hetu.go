@@ -56,6 +56,11 @@ var C4Callbacks StC4Callbacks
 
 var Nodes sync.Map
 
+// LoadNodesMap 加载 Map
+func LoadNodesMap(m map[uint64]StNode) {
+	// todo
+}
+
 func findNodeIDbyEui64(eui64 uint64) (nodeID uint16) {
 	nodeID = ezsp.EMBER_NULL_NODE_ID
 	Nodes.Range(func(key, value interface{}) bool {

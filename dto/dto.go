@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 // Network Zigbee 网络控制
 type Network struct {
 	Command string
@@ -17,4 +19,13 @@ type ZigbeeDeviceMessage struct {
 	Addr    uint16 `json:"addr"`
 	Message []byte `json:"message"`
 	Time    int64  `json:"time"`
+}
+
+// ZigbeeDevice 设备对应表
+type ZigbeeDevice struct {
+	NodeID       uint16
+	Eui64        uint64
+	LastRecvTime time.Time
+	State        byte
+	Mac          string
 }
