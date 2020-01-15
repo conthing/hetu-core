@@ -1,12 +1,12 @@
 package main
 
 import (
-	"hetu/config"
-	"hetu/ezsp"
-	"hetu/ezsp/zgb"
-	mqtt "hetu/mqtt/client"
-	"hetu/redis"
-	"hetu/router"
+	"hetu-core/config"
+	"hetu-core/ezsp"
+	"hetu-core/ezsp/zgb"
+	mqtt "hetu-core/mqtt/client"
+	"hetu-core/redis"
+	"hetu-core/router"
 )
 
 func main() {

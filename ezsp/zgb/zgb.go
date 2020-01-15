@@ -1,10 +1,10 @@
 package zgb
 
 import (
-	"hetu/ezsp/ash"
-	"hetu/ezsp/c4"
-	"hetu/ezsp/ezsp"
-	"hetu/ezsp/hetu"
+	"hetu-core/ezsp/ash"
+	"hetu-core/ezsp/c4"
+	"hetu-core/ezsp/ezsp"
+	"hetu-core/ezsp/hetu"
 
 	"github.com/conthing/utils/common"
 )

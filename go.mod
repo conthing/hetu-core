@@ -1,4 +1,4 @@
-module hetu
+module hetu-core
 
 go 1.13
 

@@ -2,13 +2,13 @@ package ezsp
 
 import (
 	"encoding/json"
-	"hetu/config"
-	"hetu/dto"
-	"hetu/ezsp/ash"
-	"hetu/ezsp/hetu"
-	"hetu/ezsp/zgb"
-	"hetu/handler"
-	"hetu/redis"
+	"hetu-core/config"
+	"hetu-core/dto"
+	"hetu-core/ezsp/ash"
+	"hetu-core/ezsp/hetu"
+	"hetu-core/ezsp/zgb"
+	"hetu-core/handler"
+	"hetu-core/redis"
 	"strconv"
 
 	"github.com/conthing/utils/common"
