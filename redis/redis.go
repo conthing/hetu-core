@@ -24,7 +24,19 @@ func SaveToPreparedQueue() {
 	// pool.Do(radix.Cmd(nil, "LPUSH", "prepared_list", string(m)))
 }
 
-// Save 保存到数据库
-func Save(m []byte) {
+// SaveZigbeeDeviceList 保存到数据库
+func SaveZigbeeDeviceList(m []byte) {
 	pool.Do(radix.Cmd(nil, "LPUSH", "zigbee_device_list", string(m)))
+}
+
+// SaveZigbeeNode 存设备地址、短地址关系对应节点
+func SaveZigbeeNode(eui64 uint64, m []byte) {
+	pool.Do(radix.Cmd(nil, "HSET", "zigbee_device_table", string(eui64), string(m)))
+}
+
+// ReadSaveZigbeeNodeTable 读取对应表
+func ReadSaveZigbeeNodeTable() map[string]string {
+	var m map[string]string
+	pool.Do(radix.Cmd(&m, "HGETALL", "zigbee_device_table"))
+	return m
 }

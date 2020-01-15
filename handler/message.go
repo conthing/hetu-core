@@ -30,7 +30,7 @@ func ReceiveMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpo
 		redis.SaveToPreparedQueue()
 	}
 	// Redis
-	redis.Save(mJSON)
+	redis.SaveZigbeeDeviceList(mJSON)
 
 }
 
@@ -41,5 +41,17 @@ func SentMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpoint
 
 // NodeStatus ?
 func NodeStatus(eui64 uint64, nodeID uint16, status byte, deviceType byte) {
-
+	value := dto.ZigbeeNode{
+		NodeID:       nodeID,
+		Eui64:        eui64,
+		LastRecvTime: time.Now(),
+		State:        status,
+		Mac:          fmt.Sprintf("%016x", eui64),
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		common.Log.Error("序列化 node 节点 失败", err)
+		return
+	}
+	redis.SaveZigbeeNode(eui64, data)
 }

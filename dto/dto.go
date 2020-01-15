@@ -21,8 +21,8 @@ type ZigbeeDeviceMessage struct {
 	Time    int64  `json:"time"`
 }
 
-// ZigbeeDevice 设备对应表
-type ZigbeeDevice struct {
+// ZigbeeNode 设备节点
+type ZigbeeNode struct {
 	NodeID       uint16
 	Eui64        uint64
 	LastRecvTime time.Time

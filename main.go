@@ -11,6 +11,7 @@ import (
 func main() {
 	config.Service()
 	initEzspModule()
+
 	mqtt.Connect("hetu_mqtt_post")
 	redis.Connect()
 	errs := make(chan error, 3)
