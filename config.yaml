@@ -1,0 +1,16 @@
+serial:
+  name: S1
+  baud: 57600
+  rtscts: false
+trace_settings:
+  ashframetraceon: false
+  ashtraceon: false
+  ezspframetraceon: false
+  ezspapitraceon: false
+  ezspcallbacktraceon: true
+  ncptraceon: true
+  ncpformtraceon: true
+  ncpsourceroutetraceon: false
+network_settings:
+  networktype: hetu
+  securitylevel: 0

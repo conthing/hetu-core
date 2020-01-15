@@ -1,4 +1,4 @@
-package main
+package ezsp
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ import (
 	"github.com/conthing/utils/common"
 )
 
-func initEzspModule() {
+func InitEzspModule() {
 	hetu.C4Callbacks = hetu.StC4Callbacks{
 		C4MessageSentHandler:     handler.SentMessage,
 		C4IncomingMessageHandler: handler.ReceiveMessage,

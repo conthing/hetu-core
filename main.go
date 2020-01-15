@@ -2,6 +2,7 @@ package main
 
 import (
 	"hetu/config"
+	"hetu/ezsp"
 	"hetu/ezsp/zgb"
 	mqtt "hetu/mqtt/client"
 	"hetu/redis"
@@ -10,10 +11,10 @@ import (
 
 func main() {
 	config.Service()
-	initEzspModule()
+	redis.Connect()
+	ezsp.InitEzspModule()
 
 	mqtt.Connect("hetu_mqtt_post")
-	redis.Connect()
 	errs := make(chan error, 3)
 
 	go zgb.TickRunning(errs)
