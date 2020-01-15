@@ -9,6 +9,7 @@ import (
 	"hetu/ezsp/ezsp"
 
 	"hetu/ezsp/zcl"
+	"encoding/binary"
 
 	"github.com/conthing/utils/common"
 )
@@ -42,7 +43,6 @@ type StNode struct {
 	Newjoin      bool
 	ToBeDeleted  bool
 
-	DeviceType byte
 }
 
 //eui64 要转成 16进制 mac
@@ -67,10 +67,10 @@ func LoadNodesMap(m map[uint64]StNode) {
 func StoreNode(node *StNode) {
 	nodeID := findNodeIDbyEui64(node.Eui64)
 		if nodeID == ezsp.EMBER_NULL_NODE_ID {
-			Nodes.Store(node.NodeID, node) // map中存储
+			Nodes.Store(node.NodeID, *node) // map中存储
 		}else {
 			Nodes.Delete(nodeID) // map中原来的删掉
-			Nodes.Store(node.NodeID, node) // map中存储
+			Nodes.Store(node.NodeID, *node) // map中存储
 		}
 }
 
@@ -113,19 +113,13 @@ func (_ *StNode) UnsupportClusterCommandHandle(z *zcl.ZclContext, cluster uint16
 
 func (node *StNode) getState() byte {
 	now := time.Now()
-	//todo DeviceType没赋值
-	if node.DeviceType < ezsp.EMBER_ROUTER || node.DeviceType > ezsp.EMBER_MOBILE_END_DEVICE {
-		// PS未上传，且DeviceType未上传或非法
-		return C4_STATE_NULL
-	} else {
-		// PS已上传，且DeviceType合法
 
 		timeout := C4_MAX_OFFLINE_TIMEOUT * time.Second
 		if now.Sub(node.LastRecvTime) > timeout {
 			return C4_STATE_OFFLINE
 		}
 		return C4_STATE_ONLINE
-	}
+	
 }
 
 func removeDeviceAndNode(node *StNode) {
@@ -140,8 +134,9 @@ func removeDeviceAndNode(node *StNode) {
 // RefreshHandle 收到报文发生变化，或定时刷新时调用
 func (node *StNode) RefreshHandle() {
 	if node.ToBeDeleted {
+		common.Log.Debugf("HetuNodeStatusHandler delete")
 		if C4Callbacks.C4NodeStatusHandler != nil {
-			C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_DELETED, node.DeviceType)
+			C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_DELETED, 0)
 		}
 		Nodes.Delete(node.NodeID)
 		common.Log.Infof("node map delete 0x%016x", node.Eui64)
@@ -149,6 +144,7 @@ func (node *StNode) RefreshHandle() {
 	}
 
 	newState := node.getState()
+	common.Log.Debugf("newState:%d",newState)
 
 	if newState != node.State {
 		if newState == C4_STATE_ONLINE {
@@ -163,13 +159,15 @@ func (node *StNode) RefreshHandle() {
 			} else {
 				common.Log.Infof("node 0x%016x reonline", node.Eui64)
 			}
+			common.Log.Debugf("HetuNodeStatusHandler online")
 			if C4Callbacks.C4NodeStatusHandler != nil {
-				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_ONLINE, node.DeviceType)
+				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_ONLINE, 0)
 			}
 		} else if newState == C4_STATE_OFFLINE {
 			common.Log.Infof("node 0x%016x offline", node.Eui64)
+			common.Log.Debugf("HetuNodeStatusHandler offline")
 			if C4Callbacks.C4NodeStatusHandler != nil {
-				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_OFFLINE, node.DeviceType)
+				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_OFFLINE, 0)
 			}
 		}
 		node.State = newState
@@ -406,20 +404,24 @@ func IncomingMessageHandler(incomingMessageType byte,
 
 	now := time.Now()
 	if apsFrame.ProfileId == ZDO_PROFILE {
-		common.Log.Errorf("zdo : %+v", *apsFrame)
+		if apsFrame.ClusterId == 0x0013 { //device announce
+			nodeID := binary.LittleEndian.Uint16(message[1:])
+			eui64 := binary.LittleEndian.Uint64(message[3:])
+			StoreNode(&StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: now})
+			common.Log.Errorf("zdo announce: 0x%04x,%016x", nodeID, eui64)
+		}
 	} else {
 		if incomingMessageType == ezsp.EMBER_INCOMING_UNICAST {
 			var node StNode
 			value, ok := Nodes.Load(sender) // 从map中加载
 			if ok {
-				fmt.Printf("Nodes.Load ok")
 				if node, ok = value.(StNode); !ok {
 					common.Log.Errorf("Nodes map unsupported type")
 					return
 				}
+				common.Log.Debugf("Nodes map get %016x", node.Eui64)
 				node.LastRecvTime = now
 			} else {
-				fmt.Printf("EzspLookupEui64ByNodeId")
 				eui64, err := ezsp.EzspLookupEui64ByNodeId(sender)
 				if err != nil {
 					common.Log.Errorf("Incoming message lookup eui64 failed: %v", err)
@@ -431,12 +433,14 @@ func IncomingMessageHandler(incomingMessageType byte,
 					eui64 = orphanEui64
 				}
 
+				common.Log.Debugf("EzspLookupEui64ByNodeId get %016x", eui64)
 				node = StNode{NodeID: sender, Eui64: eui64, LastRecvTime: now}
 			}
+			StoreNode(&node)
 
+			common.Log.Debugf("HetuIncomingMessageHandler")
 			if C4Callbacks.C4IncomingMessageHandler != nil {
 				if node.Eui64 != 0 {
-					common.Log.Info("node", node.Eui64)
 					C4Callbacks.C4IncomingMessageHandler(node.Eui64, apsFrame.ProfileId, apsFrame.ClusterId, apsFrame.DestinationEndpoint, apsFrame.SourceEndpoint, message)
 				} else {
 					common.Log.Errorf("recv msg from NodeID 0x%04x without EUI64", node.NodeID)

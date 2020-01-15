@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/conthing/ezsp/ash"
-	"github.com/conthing/ezsp/zgb"
+	"hetu/ezsp/ash"
+	"hetu/ezsp/zgb"
 	"github.com/conthing/utils/common"
 )
 
