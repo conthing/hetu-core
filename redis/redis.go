@@ -30,8 +30,8 @@ func SaveZigbeeDeviceList(m []byte) {
 }
 
 // SaveZigbeeNode 存设备地址、短地址关系对应节点
-func SaveZigbeeNode(eui64 uint64, m []byte) {
-	pool.Do(radix.Cmd(nil, "HSET", "zigbee_device_table", string(eui64), string(m)))
+func SaveZigbeeNode(eui64 string, m []byte) {
+	pool.Do(radix.Cmd(nil, "HSET", "zigbee_device_table", eui64, string(m)))
 }
 
 // ReadSaveZigbeeNodeTable 读取对应表

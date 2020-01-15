@@ -7,6 +7,7 @@ import (
 	"hetu/dto"
 	mqtt "hetu/mqtt/client"
 	"hetu/redis"
+	"strconv"
 	"time"
 
 	"github.com/conthing/utils/common"
@@ -53,5 +54,6 @@ func NodeStatus(eui64 uint64, nodeID uint16, status byte, deviceType byte) {
 		common.Log.Error("序列化 node 节点 失败", err)
 		return
 	}
-	redis.SaveZigbeeNode(eui64, data)
+	eui64str := strconv.FormatUint(eui64, 16)
+	redis.SaveZigbeeNode(eui64str, data)
 }
