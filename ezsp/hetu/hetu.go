@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"hetu/ezsp/ezsp"
+	"hetu-core/ezsp/ezsp"
 
-	"hetu/ezsp/zcl"
+	"hetu-core/ezsp/zcl"
 	"encoding/binary"
 
 	"github.com/conthing/utils/common"
@@ -58,7 +58,7 @@ var Nodes sync.Map
 
 // LoadNodesMap 加载 Map
 func LoadNodesMap(m map[uint64]StNode) {
-	for _,node := range m {
+	for _, node := range m {
 		StoreNode(&node)
 	}
 }
@@ -66,12 +66,12 @@ func LoadNodesMap(m map[uint64]StNode) {
 // StoreNode 保存节点到Nodes中，如果有重复的eui64，更新
 func StoreNode(node *StNode) {
 	nodeID := findNodeIDbyEui64(node.Eui64)
-		if nodeID == ezsp.EMBER_NULL_NODE_ID {
-			Nodes.Store(node.NodeID, *node) // map中存储
-		}else {
-			Nodes.Delete(nodeID) // map中原来的删掉
-			Nodes.Store(node.NodeID, *node) // map中存储
-		}
+	if nodeID == ezsp.EMBER_NULL_NODE_ID {
+		Nodes.Store(node.NodeID, *node) // map中存储
+	}else {
+		Nodes.Delete(nodeID) // map中原来的删掉
+		Nodes.Store(node.NodeID, *node) // map中存储
+	}
 }
 
 //在Nodes中找到匹配的eui64
@@ -367,7 +367,7 @@ func IncomingSenderEui64Handler(eui64 uint64) {
 
 	common.Log.Debugf("IncomingSenderEui64Handler 0x%x", eui64)
 	nodeID := findNodeIDbyEui64(eui64)
-	
+
 	if nodeID == ezsp.EMBER_NULL_NODE_ID { //在Nodes中找不到的话，查询NCP是否有保存
 		var err error
 		nodeID, err = ezsp.EzspLookupNodeIdByEui64(eui64)

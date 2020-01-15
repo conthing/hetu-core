@@ -2,7 +2,7 @@ package config
 
 import (
 	"bytes"
-	"hetu/ezsp/zgb"
+	"hetu-core/ezsp/zgb"
 	"io/ioutil"
 	"os"
 

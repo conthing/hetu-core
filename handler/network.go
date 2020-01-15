@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"hetu/dto"
-	"hetu/ezsp/hetu"
+	"hetu-core/dto"
+	"hetu-core/ezsp/hetu"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

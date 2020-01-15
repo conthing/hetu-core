@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"hetu/handler"
+	"hetu-core/handler"
 
 	"github.com/gin-gonic/gin"
 )

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"hetu/ezsp/ezsp"
-	"hetu/ezsp/zcl"
+	"hetu-core/ezsp/ezsp"
+	"hetu-core/ezsp/zcl"
 
 	"github.com/conthing/utils/common"
 )

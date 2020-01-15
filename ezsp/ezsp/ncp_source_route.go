@@ -1,7 +1,7 @@
 package ezsp
 
 import (
-	"hetu/ezsp/ash"
+	"hetu-core/ezsp/ash"
 
 	"github.com/conthing/utils/common"
 )
