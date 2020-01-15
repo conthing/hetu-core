@@ -3,6 +3,7 @@ package redis
 import (
 	"log"
 
+	"github.com/conthing/utils/common"
 	"github.com/mediocregopher/radix/v3"
 )
 
@@ -36,7 +37,8 @@ func SaveZigbeeNode(eui64 string, m []byte) {
 
 // ReadSaveZigbeeNodeTable 读取对应表
 func ReadSaveZigbeeNodeTable() map[string]string {
-	var m map[string]string
+	m := make(map[string]string)
 	pool.Do(radix.Cmd(&m, "HGETALL", "zigbee_device_table"))
+	common.Log.Info(m)
 	return m
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/conthing/utils/common"
 )
 
+// InitEzspModule 初始化Ezsp
 func InitEzspModule() {
 	hetu.C4Callbacks = hetu.StC4Callbacks{
 		C4MessageSentHandler:     handler.SentMessage,
@@ -32,7 +33,7 @@ func InitEzspModule() {
 	// Time it took to start service
 	common.Log.Infof("Open Serial success port=%s baud=%d", config.Conf.Serial.Name, config.Conf.Serial.Baud)
 	// 初始化 长短地址对应表
-	var nodesMap map[uint64]hetu.StNode
+	nodesMap := make(map[uint64]hetu.StNode)
 	m := redis.ReadSaveZigbeeNodeTable()
 	for key, value := range m {
 		eui64, err := strconv.ParseUint(key, 16, 64)
