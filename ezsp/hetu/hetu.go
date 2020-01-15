@@ -22,7 +22,7 @@ const (
 	C4_STATE_ONLINE     = byte(2) //announce完成，offline后又收到报文，其中TC是新join的情况下announce完成会触发newnode的应用层事件
 	C4_STATE_OFFLINE    = byte(3) //接收超时
 
-	C4_MAX_OFFLINE_TIMEOUT = 300
+	C4_MAX_OFFLINE_TIMEOUT = 30
 
 	C4_NODE_STATUS_OFFLINE = byte(0)
 	C4_NODE_STATUS_ONLINE  = byte(1)
@@ -58,9 +58,23 @@ var Nodes sync.Map
 
 // LoadNodesMap 加载 Map
 func LoadNodesMap(m map[uint64]StNode) {
-	// todo
+	for _,node := range m {
+		StoreNode(&node)
+	}
 }
 
+// StoreNode 保存节点到Nodes中，如果有重复的eui64，更新
+func StoreNode(node *StNode) {
+	nodeID := findNodeIDbyEui64(node.Eui64)
+		if nodeID == ezsp.EMBER_NULL_NODE_ID {
+			Nodes.Store(node.NodeID, node) // map中存储
+		}else {
+			Nodes.Delete(nodeID) // map中原来的删掉
+			Nodes.Store(node.NodeID, node) // map中存储
+		}
+}
+
+//在Nodes中找到匹配的eui64
 func findNodeIDbyEui64(eui64 uint64) (nodeID uint16) {
 	nodeID = ezsp.EMBER_NULL_NODE_ID
 	Nodes.Range(func(key, value interface{}) bool {
@@ -355,10 +369,11 @@ func IncomingSenderEui64Handler(eui64 uint64) {
 
 	common.Log.Debugf("IncomingSenderEui64Handler 0x%x", eui64)
 	nodeID := findNodeIDbyEui64(eui64)
-	if nodeID == ezsp.EMBER_NULL_NODE_ID {
+	
+	if nodeID == ezsp.EMBER_NULL_NODE_ID { //在Nodes中找不到的话，查询NCP是否有保存
 		var err error
 		nodeID, err = ezsp.EzspLookupNodeIdByEui64(eui64)
-		if err != nil {
+		if err != nil { //NCP也没有的话，作为orphan保存，与即将收到的incomingmessage匹配
 			orphanEui64 = eui64
 			orphanEui64RecvTime = now
 			common.Log.Errorf("Incoming message lookup nodeID failed: %v", err)
@@ -390,53 +405,42 @@ func IncomingMessageHandler(incomingMessageType byte,
 	message []byte) {
 
 	now := time.Now()
-
-	// err := ezsp.EzspSendReply(sender, apsFrame, nil)
-	// if err != nil {
-	// 	common.Log.Errorf("EzspSendReply failed: %v", err)
-	// }
-
-	var node StNode
-	value, ok := Nodes.Load(sender) // 从map中加载
-	if ok {
-		fmt.Printf("Nodes.Load ok")
-		if node, ok = value.(StNode); !ok {
-			common.Log.Errorf("Nodes map unsupported type")
-			return
-		}
-		node.LastRecvTime = now
-	} else {
-		fmt.Printf("EzspLookupEui64ByNodeId")
-		eui64, err := ezsp.EzspLookupEui64ByNodeId(sender)
-		if err != nil {
-			common.Log.Errorf("Incoming message lookup eui64 failed: %v", err)
-			//orphanEui64是200ms以内的，认为是同一个node
-			if now.Sub(orphanEui64RecvTime) > time.Millisecond*200 {
-				return
-			}
-			common.Log.Warnf("match with EUI64=%016x recved %v ago", orphanEui64, now.Sub(orphanEui64RecvTime))
-			eui64 = orphanEui64
-		}
-
-		node = StNode{NodeID: sender, Eui64: eui64, LastRecvTime: now}
-	}
-
 	if apsFrame.ProfileId == ZDO_PROFILE {
-		//}else if apsFrame.ProfileId == C4_PROFILE {
-		//	if apsFrame.ClusterId == C4_CLUSTER {
-		//	}
-	} else if incomingMessageType != ezsp.EMBER_INCOMING_UNICAST {
+		common.Log.Errorf("zdo : %+v", *apsFrame)
 	} else {
-		//err := ezsp.EzspSendReply(sender, apsFrame, nil)
-		//if err != nil {
-		//	common.Log.Errorf("EzspSendReply failed: %v", err)
-		//}
-		if C4Callbacks.C4IncomingMessageHandler != nil {
-			if node.Eui64 != 0 {
-				common.Log.Info("node", node.Eui64)
-				C4Callbacks.C4IncomingMessageHandler(node.Eui64, apsFrame.ProfileId, apsFrame.ClusterId, apsFrame.DestinationEndpoint, apsFrame.SourceEndpoint, message)
+		if incomingMessageType == ezsp.EMBER_INCOMING_UNICAST {
+			var node StNode
+			value, ok := Nodes.Load(sender) // 从map中加载
+			if ok {
+				fmt.Printf("Nodes.Load ok")
+				if node, ok = value.(StNode); !ok {
+					common.Log.Errorf("Nodes map unsupported type")
+					return
+				}
+				node.LastRecvTime = now
 			} else {
-				common.Log.Errorf("recv msg from NodeID 0x%04x without EUI64", node.NodeID)
+				fmt.Printf("EzspLookupEui64ByNodeId")
+				eui64, err := ezsp.EzspLookupEui64ByNodeId(sender)
+				if err != nil {
+					common.Log.Errorf("Incoming message lookup eui64 failed: %v", err)
+					//orphanEui64是200ms以内的，认为是同一个node
+					if now.Sub(orphanEui64RecvTime) > time.Millisecond*200 {
+						return
+					}
+					common.Log.Warnf("match with EUI64=%016x recved %v ago", orphanEui64, now.Sub(orphanEui64RecvTime))
+					eui64 = orphanEui64
+				}
+
+				node = StNode{NodeID: sender, Eui64: eui64, LastRecvTime: now}
+			}
+
+			if C4Callbacks.C4IncomingMessageHandler != nil {
+				if node.Eui64 != 0 {
+					common.Log.Info("node", node.Eui64)
+					C4Callbacks.C4IncomingMessageHandler(node.Eui64, apsFrame.ProfileId, apsFrame.ClusterId, apsFrame.DestinationEndpoint, apsFrame.SourceEndpoint, message)
+				} else {
+					common.Log.Errorf("recv msg from NodeID 0x%04x without EUI64", node.NodeID)
+				}
 			}
 		}
 	}

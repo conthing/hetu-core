@@ -1,5 +1,5 @@
 serial:
-  name: S1
+  name: COM3
   baud: 57600
   rtscts: false
 trace_settings:
