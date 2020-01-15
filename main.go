@@ -10,10 +10,10 @@ import (
 
 func main() {
 	config.Service()
+	redis.Connect()
 	initEzspModule()
 
 	mqtt.Connect("hetu_mqtt_post")
-	redis.Connect()
 	errs := make(chan error, 3)
 
 	go zgb.TickRunning(errs)
