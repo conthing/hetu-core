@@ -22,7 +22,7 @@ const (
 	C4_STATE_ONLINE     = byte(2) //announce完成，offline后又收到报文，其中TC是新join的情况下announce完成会触发newnode的应用层事件
 	C4_STATE_OFFLINE    = byte(3) //接收超时
 
-	C4_MAX_OFFLINE_TIMEOUT = 300
+	C4_MAX_OFFLINE_TIMEOUT = 30
 
 	C4_NODE_STATUS_OFFLINE = byte(0)
 	C4_NODE_STATUS_ONLINE  = byte(1)
