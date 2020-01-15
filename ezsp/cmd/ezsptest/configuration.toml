@@ -1,0 +1,14 @@
+[Serial]
+Name = "COM4"
+Baud = 57600
+RtsCts = false
+
+[TraceSettings]
+#AshTraceOn = true
+EzspCallbackTraceOn = true
+NcpTraceOn = true
+NcpFormTraceOn = true
+
+[NetworkSettings]
+NetworkType = "hetu"
+SecurityLevel = 0
