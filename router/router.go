@@ -13,6 +13,8 @@ func Run(port int) {
 	r.Group("/api/v1")
 	{
 		r.PUT("/network", handler.NetworkHandler)
+		r.GET("/nodes", handler.GetZigbeeNodes)
+
 	}
 	r.Run(fmt.Sprintf(":%d", port))
 }
