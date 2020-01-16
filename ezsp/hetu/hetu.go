@@ -408,7 +408,7 @@ func IncomingMessageHandler(incomingMessageType byte,
 			nodeID := binary.LittleEndian.Uint16(message[1:])
 			eui64 := binary.LittleEndian.Uint64(message[3:])
 			StoreNode(&StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: now})
-			common.Log.Errorf("zdo announce: 0x%04x,%016x", nodeID, eui64)
+			common.Log.Debugf("zdo announce: 0x%04x,%016x", nodeID, eui64)
 		}
 	} else {
 		if incomingMessageType == ezsp.EMBER_INCOMING_UNICAST {

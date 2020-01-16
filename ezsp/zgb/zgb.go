@@ -160,7 +160,7 @@ func TickRunning(errs chan error) {
 	//}
 	//common.Log.Infof("C4SetPermission for 60 seconds")
 
-	perm := hetu.StPermission{Duration: 60}
+	perm := hetu.StPermission{Duration: 255}
 	perm.Passports = make([]*hetu.StPassport, 1)
 	perm.Passports[0] = &hetu.StPassport{MAC: "xxxxxxxxxxxxxxxx"}
 	err = hetu.SetPermission(&perm)
@@ -170,7 +170,6 @@ func TickRunning(errs chan error) {
 	common.Log.Infof("SetPermission OK")
 
 	//go hetu.RemoveNetwork()
-	//go hetu.HetuBroadcast()
 
 	for {
 		if networkSettings.NetworkType == "hetu" {
