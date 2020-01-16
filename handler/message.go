@@ -23,6 +23,7 @@ func ReceiveMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpo
 	mJSON, err := json.Marshal(m)
 	if err != nil {
 		common.Log.Error("序列化错误")
+		return
 	}
 	// MQTT
 	err = mqtt.Publish("zigbee_device", mJSON)
@@ -30,8 +31,23 @@ func ReceiveMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpo
 		common.Log.Error("mqtt 发送失败")
 		redis.SaveToPreparedQueue()
 	}
-	// Redis
+	// Redis 时间序列
 	redis.SaveZigbeeDeviceList(mJSON)
+	// Redis table
+	euiStr := strconv.FormatUint(eui64, 16)
+	node := redis.GetZigbeeNode(euiStr)
+	node.LastRecvTime = time.Now()
+	node.Addr = binary.LittleEndian.Uint16(message)
+	node.Message = message
+	node.Eui64 = eui64
+	node.State = byte(1)
+
+	data, err := json.Marshal(node)
+	if err != nil {
+		common.Log.Error("序列化 node 节点 失败", err)
+		return
+	}
+	redis.SaveZigbeeNode(euiStr, data)
 
 }
 
@@ -40,20 +56,16 @@ func SentMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpoint
 
 }
 
-// NodeStatus ?
+// NodeStatus 离线、上线
 func NodeStatus(eui64 uint64, nodeID uint16, status byte, deviceType byte) {
-	value := dto.ZigbeeNode{
-		NodeID:       nodeID,
-		Eui64:        eui64,
-		LastRecvTime: time.Now(),
-		State:        status,
-		Mac:          fmt.Sprintf("%016x", eui64),
-	}
-	data, err := json.Marshal(value)
+	euiStr := strconv.FormatUint(eui64, 16)
+	node := redis.GetZigbeeNode(euiStr)
+	node.State = status
+	node.NodeID = nodeID
+	data, err := json.Marshal(node)
 	if err != nil {
 		common.Log.Error("序列化 node 节点 失败", err)
 		return
 	}
-	eui64str := strconv.FormatUint(eui64, 16)
-	redis.SaveZigbeeNode(eui64str, data)
+	redis.SaveZigbeeNode(euiStr, data)
 }

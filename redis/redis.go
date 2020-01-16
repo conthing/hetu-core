@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"hetu-core/dto"
 	"log"
 
 	"github.com/conthing/utils/common"
@@ -41,4 +42,11 @@ func ReadSaveZigbeeNodeTable() map[string]string {
 	pool.Do(radix.Cmd(&m, "HGETALL", "zigbee_device_table"))
 	common.Log.Info(m)
 	return m
+}
+
+// GetZigbeeNode 获取ZigbeeNode
+func GetZigbeeNode(eui64 string) *dto.ZigbeeNode {
+	node := new(dto.ZigbeeNode)
+	pool.Do(radix.Cmd(&node, "HGET", eui64))
+	return node
 }

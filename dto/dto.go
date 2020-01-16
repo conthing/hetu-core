@@ -23,9 +23,11 @@ type ZigbeeDeviceMessage struct {
 
 // ZigbeeNode 设备节点
 type ZigbeeNode struct {
-	NodeID       uint16
 	Eui64        uint64
 	LastRecvTime time.Time
 	State        byte
-	Mac          string
+	NodeID       uint16
+	// Addr 播码地址
+	Addr    uint16
+	Message []byte
 }
