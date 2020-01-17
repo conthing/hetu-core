@@ -2,6 +2,17 @@ package dto
 
 import "time"
 
+const (
+	// Success 成功状态码
+	Success = iota
+	// InvalidJSON 无效的 JSON
+	InvalidJSON
+	// CreateZigbeeNetFailed 创建 Zigbee 网络失败
+	CreateZigbeeNetFailed
+	// RemoveZigbeeNetFailed 删除 Zigbee 网络失败
+	RemoveZigbeeNetFailed
+)
+
 // Network Zigbee 网络控制
 type Network struct {
 	Command string

@@ -5,6 +5,7 @@ import (
 	"hetu-core/ezsp/hetu"
 	"net/http"
 
+	"github.com/conthing/utils/common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,12 +27,32 @@ func NetworkHandler(c *gin.Context) {
 		p.Passports[1].MAC = "xxxxxxxxxxxxce73"
 		hetu.SetPermission(p)
 		// -------------
-		c.JSON(http.StatusOK, &dto.Resp{Code: 0, Message: "入网开始"})
-	case "RemoveAll":
-		hetu.RemoveNetwork()
-		c.JSON(http.StatusOK, &dto.Resp{Code: 0, Message: "离网成功"})
+		c.JSON(http.StatusOK, &dto.Resp{Code: dto.Success, Message: "入网开始"})
+	case "CreateZigbeeNet":
+		err = hetu.FormNetwork(0xff)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, &dto.Resp{
+				Code:    dto.CreateZigbeeNetFailed,
+				Message: "CreateZigbeeNet Failed",
+			})
+			common.Log.Errorf("FormNetwork failed: %v", err)
+			return
+		}
+		c.JSON(http.StatusOK, &dto.Resp{Code: dto.Success, Message: "建网成功"})
+	case "RemoveZigbeeNet":
+		err = hetu.RemoveNetwork()
+		if err != nil {
+			c.JSON(http.StatusBadGateway, &dto.Resp{
+				Code:    dto.RemoveZigbeeNetFailed,
+				Message: "RemoveZigbeeNet Failed",
+			})
+			common.Log.Errorf("RemoveZigbeeNet failed: %v", err)
+			return
+		}
+		c.JSON(http.StatusOK, &dto.Resp{Code: dto.Success, Message: "删网成功"})
+
 	default:
-		c.JSON(http.StatusBadRequest, &dto.Resp{Code: 0, Message: "invalid json"})
+		c.JSON(http.StatusBadRequest, &dto.Resp{Code: dto.InvalidJSON, Message: "invalid json"})
 	}
 
 }
