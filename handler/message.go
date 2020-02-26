@@ -77,13 +77,18 @@ func NodeStatus(eui64 uint64, nodeID uint16, status byte, deviceType byte) {
 	}
 	euiStr := strconv.FormatUint(eui64, 16)
 	if euiStr == "0" {
-		common.Log.Error("错误的 eui64", eui64, euiStr)
+		common.Log.Error("错误的 eui64: ", eui64, euiStr)
 		os.Exit(1)
 	}
 
-	node, _ := redis.GetZigbeeNode(euiStr)
+	node, err := redis.GetZigbeeNode(euiStr)
+	if err != nil {
+		common.Log.Error("节点获取出错: ", eui64)
+	}
+
 	node.State = status
 	node.NodeID = nodeID
+	node.Eui64 = eui64
 	data, err := json.Marshal(node)
 	if err != nil {
 		common.Log.Error("序列化 node 节点 失败", err)

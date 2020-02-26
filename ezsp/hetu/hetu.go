@@ -406,6 +406,21 @@ func IncomingSenderEui64Handler(eui64 uint64) {
 	common.Log.Info("5 IncomingSenderEui64Handler: ", node.NodeID)
 }
 
+func Refresh(nodeID uint16) bool {
+	var node StNode
+	value, ok := Nodes.Load(nodeID) // 从map中加载
+	if ok {
+		if node, ok = value.(StNode); !ok {
+			common.Log.Errorf("Nodes map unsupported type")
+			return false
+		}
+		node.RefreshHandle()
+		return true
+	}
+	return false
+
+}
+
 func IncomingMessageHandler(incomingMessageType byte,
 	apsFrame *ezsp.EmberApsFrame,
 	lastHopLqi byte,
@@ -422,6 +437,7 @@ func IncomingMessageHandler(incomingMessageType byte,
 			eui64 := binary.LittleEndian.Uint64(message[3:])
 			StoreNode(&StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: now})
 			common.Log.Debugf("2 zdo announce: 0x%04x,%016x", nodeID, eui64)
+			Refresh(sender)
 		}
 	} else {
 		if incomingMessageType == ezsp.EMBER_INCOMING_UNICAST {
@@ -450,6 +466,7 @@ func IncomingMessageHandler(incomingMessageType byte,
 				node = StNode{NodeID: sender, Eui64: eui64, LastRecvTime: now}
 			}
 			StoreNode(&node)
+			Refresh(sender)
 			common.Log.Debugf("3 HetuIncomingMessageHandler: %d", node.NodeID)
 			if C4Callbacks.C4IncomingMessageHandler != nil {
 				if node.Eui64 != 0 {
@@ -460,6 +477,7 @@ func IncomingMessageHandler(incomingMessageType byte,
 			}
 		}
 	}
+
 }
 
 var unicastTagSequence = byte(0)
