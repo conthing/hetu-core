@@ -154,12 +154,6 @@ func TickRunning(errs chan error) {
 	}
 	common.Log.Infof("EzspNetworkInit OK")
 
-	//err = c4.SetPermission(&c4.StPermission{60, []*c4.StPassport{&c4.StPassport{PS: "inSona:IN-C01-WR-4", MAC: "xxxxxxxxxxxxce73"}}})
-	//if err != nil {
-	//	common.Log.Errorf("C4SetPermission failed: %v", err)
-	//}
-	//common.Log.Infof("C4SetPermission for 60 seconds")
-
 	perm := hetu.StPermission{Duration: 255}
 	perm.Passports = make([]*hetu.StPassport, 1)
 	perm.Passports[0] = &hetu.StPassport{MAC: "xxxxxxxxxxxxxxxx"}

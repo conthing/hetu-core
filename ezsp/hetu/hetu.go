@@ -8,8 +8,8 @@ import (
 
 	"hetu-core/ezsp/ezsp"
 
-	"hetu-core/ezsp/zcl"
 	"encoding/binary"
+	"hetu-core/ezsp/zcl"
 
 	"github.com/conthing/utils/common"
 )
@@ -42,7 +42,6 @@ type StNode struct {
 	State        byte
 	Newjoin      bool
 	ToBeDeleted  bool
-
 }
 
 //eui64 要转成 16进制 mac
@@ -68,8 +67,8 @@ func StoreNode(node *StNode) {
 	nodeID := findNodeIDbyEui64(node.Eui64)
 	if nodeID == ezsp.EMBER_NULL_NODE_ID {
 		Nodes.Store(node.NodeID, *node) // map中存储
-	}else {
-		Nodes.Delete(nodeID) // map中原来的删掉
+	} else {
+		Nodes.Delete(nodeID)            // map中原来的删掉
 		Nodes.Store(node.NodeID, *node) // map中存储
 	}
 }
@@ -114,12 +113,12 @@ func (_ *StNode) UnsupportClusterCommandHandle(z *zcl.ZclContext, cluster uint16
 func (node *StNode) getState() byte {
 	now := time.Now()
 
-		timeout := C4_MAX_OFFLINE_TIMEOUT * time.Second
-		if now.Sub(node.LastRecvTime) > timeout {
-			return C4_STATE_OFFLINE
-		}
-		return C4_STATE_ONLINE
-	
+	timeout := C4_MAX_OFFLINE_TIMEOUT * time.Second
+	if now.Sub(node.LastRecvTime) > timeout {
+		return C4_STATE_OFFLINE
+	}
+	return C4_STATE_ONLINE
+
 }
 
 func removeDeviceAndNode(node *StNode) {
@@ -144,7 +143,7 @@ func (node *StNode) RefreshHandle() {
 	}
 
 	newState := node.getState()
-	common.Log.Debugf("newState:%d",newState)
+	common.Log.Debugf("newState:%d", newState)
 
 	if newState != node.State {
 		if newState == C4_STATE_ONLINE {
@@ -439,6 +438,17 @@ func IncomingMessageHandler(incomingMessageType byte,
 			StoreNode(&node)
 
 			common.Log.Debugf("HetuIncomingMessageHandler")
+			//err := ezsp.EzspSetPolicy(ezsp.EZSP_UNICAST_REPLIES_POLICY, ezsp.EZSP_HOST_WILL_SUPPLY_REPLY)
+			//if err != nil {
+			//	common.Log.Errorf("EzspSetPolicy failed: %v", err)
+			//}
+			//common.Log.Errorf("EzspSetPolicy EZSP_HOST_WILL_SUPPLY_REPLY")
+			//reply := make([]byte, 1)
+			//reply[0] = 0
+			//err := ezsp.EzspSendReply(sender, apsFrame, message)
+			//if err != nil {
+			//	common.Log.Errorf("send reply failed %v", err)
+			//}
 			if C4Callbacks.C4IncomingMessageHandler != nil {
 				if node.Eui64 != 0 {
 					C4Callbacks.C4IncomingMessageHandler(node.Eui64, apsFrame.ProfileId, apsFrame.ClusterId, apsFrame.DestinationEndpoint, apsFrame.SourceEndpoint, message)
