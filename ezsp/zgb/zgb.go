@@ -160,14 +160,14 @@ func TickRunning(errs chan error) {
 	//}
 	//common.Log.Infof("C4SetPermission for 60 seconds")
 
-	perm := hetu.StPermission{Duration: 255}
-	perm.Passports = make([]*hetu.StPassport, 1)
-	perm.Passports[0] = &hetu.StPassport{MAC: "xxxxxxxxxxxxxxxx"}
-	err = hetu.SetPermission(&perm)
-	if err != nil {
-		common.Log.Errorf("SetPermission failed: %v", err)
-	}
-	common.Log.Infof("SetPermission OK")
+	// perm := hetu.StPermission{Duration: 255}
+	// perm.Passports = make([]*hetu.StPassport, 1)
+	// perm.Passports[0] = &hetu.StPassport{MAC: "xxxxxxxxxxxxxxxx"}
+	// err = hetu.SetPermission(&perm)
+	// if err != nil {
+	// 	common.Log.Errorf("SetPermission failed: %v", err)
+	// }
+	// common.Log.Infof("SetPermission OK")
 
 	//go hetu.RemoveNetwork()
 

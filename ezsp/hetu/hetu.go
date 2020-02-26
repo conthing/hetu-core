@@ -8,8 +8,8 @@ import (
 
 	"hetu-core/ezsp/ezsp"
 
-	"hetu-core/ezsp/zcl"
 	"encoding/binary"
+	"hetu-core/ezsp/zcl"
 
 	"github.com/conthing/utils/common"
 )
@@ -42,7 +42,6 @@ type StNode struct {
 	State        byte
 	Newjoin      bool
 	ToBeDeleted  bool
-
 }
 
 //eui64 要转成 16进制 mac
@@ -60,6 +59,7 @@ var Nodes sync.Map
 func LoadNodesMap(m map[uint64]StNode) {
 	for _, node := range m {
 		StoreNode(&node)
+		common.Log.Info("1 LoadNodesMap: ", node.NodeID)
 	}
 }
 
@@ -68,9 +68,10 @@ func StoreNode(node *StNode) {
 	nodeID := findNodeIDbyEui64(node.Eui64)
 	if nodeID == ezsp.EMBER_NULL_NODE_ID {
 		Nodes.Store(node.NodeID, *node) // map中存储
-	}else {
-		Nodes.Delete(nodeID) // map中原来的删掉
+	} else {
+		Nodes.Delete(nodeID)            // map中原来的删掉
 		Nodes.Store(node.NodeID, *node) // map中存储
+
 	}
 }
 
@@ -89,20 +90,29 @@ func findNodeIDbyEui64(eui64 uint64) (nodeID uint16) {
 	return
 }
 
+var lastTimeStamp = int64(0)
+
 func HetuTick() {
 	select {
 	case cbs := <-ezsp.CallbackCh:
 		for _, cb := range cbs {
 			ezsp.EzspCallbackDispatch(cb)
 		}
-	case <-time.After(time.Second * 10):
+	case <-time.After(time.Millisecond * 500):
+
+	}
+	now := time.Now().Unix()
+	if now-lastTimeStamp >= 10 {
+		lastTimeStamp = now
 		Nodes.Range(func(key, value interface{}) bool {
 			if node, ok := value.(StNode); ok {
 				node.RefreshHandle()
 			}
 			return true
 		})
-		HetuBroadcast()
+		err := HetuBroadcast()
+		common.Log.Info("hetu tick: ", err)
+
 	}
 }
 
@@ -114,12 +124,12 @@ func (_ *StNode) UnsupportClusterCommandHandle(z *zcl.ZclContext, cluster uint16
 func (node *StNode) getState() byte {
 	now := time.Now()
 
-		timeout := C4_MAX_OFFLINE_TIMEOUT * time.Second
-		if now.Sub(node.LastRecvTime) > timeout {
-			return C4_STATE_OFFLINE
-		}
-		return C4_STATE_ONLINE
-	
+	timeout := C4_MAX_OFFLINE_TIMEOUT * time.Second
+	if now.Sub(node.LastRecvTime) > timeout {
+		return C4_STATE_OFFLINE
+	}
+	return C4_STATE_ONLINE
+
 }
 
 func removeDeviceAndNode(node *StNode) {
@@ -144,7 +154,7 @@ func (node *StNode) RefreshHandle() {
 	}
 
 	newState := node.getState()
-	common.Log.Debugf("newState:%d",newState)
+	common.Log.Debugf("newState:%d", newState)
 
 	if newState != node.State {
 		if newState == C4_STATE_ONLINE {
@@ -173,6 +183,8 @@ func (node *StNode) RefreshHandle() {
 		node.State = newState
 	}
 	Nodes.Store(node.NodeID, *node) // map中存储
+	common.Log.Info("4 RefreshHandle: ", node.NodeID)
+
 }
 
 // StPermission 发送SetPermission请求时参数的结构
@@ -391,6 +403,7 @@ func IncomingSenderEui64Handler(eui64 uint64) {
 		node = StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: now}
 	}
 	Nodes.Store(node.NodeID, node) // map中存储
+	common.Log.Info("5 IncomingSenderEui64Handler: ", node.NodeID)
 }
 
 func IncomingMessageHandler(incomingMessageType byte,
@@ -408,7 +421,7 @@ func IncomingMessageHandler(incomingMessageType byte,
 			nodeID := binary.LittleEndian.Uint16(message[1:])
 			eui64 := binary.LittleEndian.Uint64(message[3:])
 			StoreNode(&StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: now})
-			common.Log.Debugf("zdo announce: 0x%04x,%016x", nodeID, eui64)
+			common.Log.Debugf("2 zdo announce: 0x%04x,%016x", nodeID, eui64)
 		}
 	} else {
 		if incomingMessageType == ezsp.EMBER_INCOMING_UNICAST {
@@ -437,8 +450,7 @@ func IncomingMessageHandler(incomingMessageType byte,
 				node = StNode{NodeID: sender, Eui64: eui64, LastRecvTime: now}
 			}
 			StoreNode(&node)
-
-			common.Log.Debugf("HetuIncomingMessageHandler")
+			common.Log.Debugf("3 HetuIncomingMessageHandler: %d", node.NodeID)
 			if C4Callbacks.C4IncomingMessageHandler != nil {
 				if node.Eui64 != 0 {
 					C4Callbacks.C4IncomingMessageHandler(node.Eui64, apsFrame.ProfileId, apsFrame.ClusterId, apsFrame.DestinationEndpoint, apsFrame.SourceEndpoint, message)
