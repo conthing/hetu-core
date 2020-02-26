@@ -466,24 +466,8 @@ func IncomingMessageHandler(incomingMessageType byte,
 				node = StNode{NodeID: sender, Eui64: eui64, LastRecvTime: now}
 			}
 			StoreNode(&node)
-<<<<<<< HEAD
-
-			common.Log.Debugf("HetuIncomingMessageHandler")
-			//err := ezsp.EzspSetPolicy(ezsp.EZSP_UNICAST_REPLIES_POLICY, ezsp.EZSP_HOST_WILL_SUPPLY_REPLY)
-			//if err != nil {
-			//	common.Log.Errorf("EzspSetPolicy failed: %v", err)
-			//}
-			//common.Log.Errorf("EzspSetPolicy EZSP_HOST_WILL_SUPPLY_REPLY")
-			//reply := make([]byte, 1)
-			//reply[0] = 0
-			//err := ezsp.EzspSendReply(sender, apsFrame, message)
-			//if err != nil {
-			//	common.Log.Errorf("send reply failed %v", err)
-			//}
-=======
 			Refresh(sender)
 			common.Log.Debugf("3 HetuIncomingMessageHandler: %d", node.NodeID)
->>>>>>> c09d4ec36f49ec6d4493c724790b177b296f9b8f
 			if C4Callbacks.C4IncomingMessageHandler != nil {
 				if node.Eui64 != 0 {
 					C4Callbacks.C4IncomingMessageHandler(node.Eui64, apsFrame.ProfileId, apsFrame.ClusterId, apsFrame.DestinationEndpoint, apsFrame.SourceEndpoint, message)
