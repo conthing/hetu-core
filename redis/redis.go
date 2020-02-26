@@ -45,8 +45,8 @@ func ReadSaveZigbeeNodeTable() map[string]string {
 }
 
 // GetZigbeeNode 获取ZigbeeNode
-func GetZigbeeNode(eui64 string) *dto.ZigbeeNode {
+func GetZigbeeNode(eui64 string) (*dto.ZigbeeNode, error) {
 	node := new(dto.ZigbeeNode)
-	pool.Do(radix.Cmd(&node, "HGET", eui64))
-	return node
+	err := pool.Do(radix.Cmd(&node, "HGET", eui64))
+	return node, err
 }

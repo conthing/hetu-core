@@ -7,6 +7,9 @@ import (
 	mqtt "hetu-core/mqtt/client"
 	"hetu-core/redis"
 	"hetu-core/router"
+	"os"
+
+	"github.com/conthing/utils/common"
 )
 
 func main() {
@@ -18,6 +21,12 @@ func main() {
 	errs := make(chan error, 3)
 
 	go zgb.TickRunning(errs)
-	router.Run(8080)
+
+	go router.Run(8080)
+
+	// recv error channel
+	c := <-errs
+	common.Log.Errorf("terminating: %v", c)
+	os.Exit(0)
 
 }

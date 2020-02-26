@@ -20,12 +20,24 @@ func NetworkHandler(c *gin.Context) {
 	switch net.Command {
 	case "PermitJoin":
 		// -------------
-		p := new(hetu.StPermission)
-		p.Duration = byte(255)
-		p.Passports = make([]*hetu.StPassport, 2)
-		p.Passports[0].MAC = "xxxxxxxxxxxxce73"
-		p.Passports[1].MAC = "xxxxxxxxxxxxce73"
-		hetu.SetPermission(p)
+		perm := hetu.StPermission{Duration: 255}
+		common.Log.Infof("1 perm: %+v", perm)
+
+		perm.Passports = make([]*hetu.StPassport, 1)
+		common.Log.Infof("2 perm: %+v", perm)
+
+		perm.Passports[0] = &hetu.StPassport{MAC: "xxxxxxxxxxxxxxxx"}
+		common.Log.Infof("3 perm: %+v", perm)
+		err = hetu.SetPermission(&perm)
+		if err != nil {
+			common.Log.Errorf("SetPermission failed: %v", err)
+			c.JSON(http.StatusBadGateway, &dto.Resp{
+				Code:    dto.CreateZigbeeNetFailed,
+				Message: "PermitJoin Failed",
+			})
+			return
+		}
+		common.Log.Infof("SetPermission OK")
 		// -------------
 		c.JSON(http.StatusOK, &dto.Resp{Code: dto.Success, Message: "入网开始"})
 	case "CreateZigbeeNet":

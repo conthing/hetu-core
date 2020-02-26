@@ -7,6 +7,7 @@ import (
 	"hetu-core/dto"
 	mqtt "hetu-core/mqtt/client"
 	"hetu-core/redis"
+	"os"
 	"strconv"
 	"time"
 
@@ -15,6 +16,10 @@ import (
 
 // ReceiveMessage 接收到 Zigbee 报文
 func ReceiveMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpoint byte, remoteEndpoint byte, message []byte) {
+	if eui64 == 0 {
+		common.Log.Error("错误的 eui64")
+		os.Exit(1)
+	}
 	m := new(dto.ZigbeeDeviceMessage)
 	m.Mac = fmt.Sprintf("%016x", eui64)
 	m.Addr = binary.LittleEndian.Uint16(message)
@@ -35,7 +40,15 @@ func ReceiveMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpo
 	redis.SaveZigbeeDeviceList(mJSON)
 	// Redis table
 	euiStr := strconv.FormatUint(eui64, 16)
-	node := redis.GetZigbeeNode(euiStr)
+	if euiStr == "0" {
+		common.Log.Error("错误的 eui64")
+		os.Exit(1)
+	}
+	node, err := redis.GetZigbeeNode(euiStr)
+	if err != nil {
+		return
+	}
+	common.Log.Info("redis 读取 node", node.NodeID)
 	node.LastRecvTime = time.Now()
 	node.Addr = binary.LittleEndian.Uint16(message)
 	node.Message = message
@@ -58,14 +71,30 @@ func SentMessage(eui64 uint64, profileID uint16, clusterID uint16, localEndpoint
 
 // NodeStatus 离线、上线
 func NodeStatus(eui64 uint64, nodeID uint16, status byte, deviceType byte) {
+	if eui64 == 0 {
+		common.Log.Error("错误的 eui64")
+		os.Exit(1)
+	}
 	euiStr := strconv.FormatUint(eui64, 16)
-	node := redis.GetZigbeeNode(euiStr)
+	if euiStr == "0" {
+		common.Log.Error("错误的 eui64: ", eui64, euiStr)
+		os.Exit(1)
+	}
+
+	node, err := redis.GetZigbeeNode(euiStr)
+	if err != nil {
+		common.Log.Error("节点获取出错: ", eui64)
+	}
+
 	node.State = status
 	node.NodeID = nodeID
+	node.Eui64 = eui64
 	data, err := json.Marshal(node)
 	if err != nil {
 		common.Log.Error("序列化 node 节点 失败", err)
 		return
 	}
 	redis.SaveZigbeeNode(euiStr, data)
+	common.Log.Info("redis 存 node", node.NodeID)
+
 }
