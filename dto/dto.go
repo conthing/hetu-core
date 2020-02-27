@@ -48,7 +48,7 @@ type ZigbeeDeviceMessage struct {
 //            3 offline
 type ZigbeeNode struct {
 	Eui64  uint64
-	state  byte
+	State  byte
 	NodeID uint16
-	Addr   uint16
+	Addr   byte
 }
