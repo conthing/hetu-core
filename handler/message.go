@@ -39,7 +39,6 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 	err = mqtt.Publish("zigbee_device", mJSON)
 	if err != nil {
 		common.Log.Error("mqtt 发送失败")
-		return
 	}
 	// 持久化 Message
 	redis.SaveZigbeeMessage(m)

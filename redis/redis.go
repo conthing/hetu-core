@@ -52,7 +52,7 @@ func SaveZigbeeNode(node *dto.ZigbeeNode) {
 		if err = c.Do(radix.FlatCmd(nil, "HMSET", key, node)); err != nil {
 			return err
 		}
-		if err = c.Do(radix.Cmd(nil, "RPUSH", "ZigbeeNodeList", key)); err != nil {
+		if err = c.Do(radix.Cmd(nil, "SADD", "ZigbeeNodeSet", key)); err != nil {
 			return err
 		}
 
@@ -132,7 +132,7 @@ func ReadSaveZigbeeNodeTable() map[uint64]hetu.StNode {
 	// PART 1 读取节点列表
 	var ZigbeeNodeList []string
 	key := "ZigbeeNodeList"
-	err := Client.Do(radix.Cmd(&ZigbeeNodeList, "LRANGE", key, "0", "-1"))
+	err := Client.Do(radix.Cmd(&ZigbeeNodeList, "smembers", key))
 	if err != nil {
 		common.Log.Error("读取节点表失败", err)
 		common.Log.Warn("使用空记录")
@@ -187,7 +187,7 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 	// PART 1 读取节点列表
 	var ZigbeeNodeList []string
 	key := "ZigbeeNodeList"
-	err := Client.Do(radix.Cmd(&ZigbeeNodeList, "LRANGE", key, "0", "-1"))
+	err := Client.Do(radix.Cmd(&ZigbeeNodeList, "smembers", key))
 	if err != nil {
 		common.Log.Error("读取节点表失败", err)
 		return nil, err

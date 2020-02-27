@@ -19,16 +19,8 @@ func NetworkHandler(c *gin.Context) {
 	}
 	switch net.Command {
 	case "PermitJoin":
-		// -------------
-		perm := hetu.StPermission{Duration: 255}
-		common.Log.Infof("1 perm: %+v", perm)
 
-		perm.Passports = make([]*hetu.StPassport, 1)
-		common.Log.Infof("2 perm: %+v", perm)
-
-		perm.Passports[0] = &hetu.StPassport{MAC: "xxxxxxxxxxxxxxxx"}
-		common.Log.Infof("3 perm: %+v", perm)
-		err = hetu.SetPermission(&perm)
+		err = hetu.SetPermission(255)
 		if err != nil {
 			common.Log.Errorf("SetPermission failed: %v", err)
 			c.JSON(http.StatusBadGateway, &dto.Resp{

@@ -30,6 +30,6 @@ func InitEzspModule() {
 	// Time it took to start service
 	common.Log.Infof("Open Serial success port=%s baud=%d", config.Conf.Serial.Name, config.Conf.Serial.Baud)
 	// 初始化 长短地址对应表
-	nodesMap = redis.ReadSaveZigbeeNodeTable()
+	nodesMap := redis.ReadSaveZigbeeNodeTable()
 	hetu.LoadNodesMap(nodesMap)
 }
