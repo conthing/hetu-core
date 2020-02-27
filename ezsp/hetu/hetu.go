@@ -9,9 +9,9 @@ import (
 	"hetu-core/ezsp/ezsp"
 
 	"encoding/binary"
-	"hetu-core/ezsp/zcl"
 
 	"github.com/conthing/utils/common"
+	"github.com/conthing/utils/crc16"
 )
 
 const (
@@ -23,31 +23,27 @@ const (
 	C4_STATE_ONLINE     = byte(2) //announce完成，offline后又收到报文，其中TC是新join的情况下announce完成会触发newnode的应用层事件
 	C4_STATE_OFFLINE    = byte(3) //接收超时
 
-	C4_MAX_OFFLINE_TIMEOUT = 30
-
-	C4_NODE_STATUS_OFFLINE = byte(0)
-	C4_NODE_STATUS_ONLINE  = byte(1)
-	C4_NODE_STATUS_REBOOT  = byte(2)
-	C4_NODE_STATUS_DELETED = byte(3)
+	C4_MAX_OFFLINE_TIMEOUT = 90 //未收到报文达到90秒，标记为offline
 )
+
+var AnnouceFlagTime = time.Unix(3661, 0) // 1970-1-1 01:01:01 表示设备已经announce但还没有收到有效报文的lastrecvtime
 
 var ErrMeshNotExist = errors.New("Mesh not exist")
 var ErrMeshAlreadyExist = errors.New("Mesh already exist")
 var ErrMeshNotEmpty = errors.New("Not empty mesh")
 
 type StNode struct {
-	NodeID       uint16
 	Eui64        uint64
-	LastRecvTime time.Time
+	NodeID       uint16
 	State        byte
-	Newjoin      bool
-	ToBeDeleted  bool
+	Addr         byte
+	LastRecvTime time.Time
 }
 
 //eui64 要转成 16进制 mac
 type StC4Callbacks struct {
 	C4MessageSentHandler     func(eui64 uint64, profileId uint16, clusterId uint16, localEndpoint byte, remoteEndpoint byte, message []byte, success bool)
-	C4IncomingMessageHandler func(eui64 uint64, profileId uint16, clusterId uint16, localEndpoint byte, remoteEndpoint byte, message []byte)
+	C4IncomingMessageHandler func(eui64 uint64, message []byte, recvTime time.Time)
 	C4NodeStatusHandler      func(eui64 uint64, nodeID uint16, status byte, deviceType byte)
 }
 
@@ -71,7 +67,6 @@ func StoreNode(node *StNode) {
 	} else {
 		Nodes.Delete(nodeID)            // map中原来的删掉
 		Nodes.Store(node.NodeID, *node) // map中存储
-
 	}
 }
 
@@ -106,30 +101,29 @@ func HetuTick() {
 		lastTimeStamp = now
 		Nodes.Range(func(key, value interface{}) bool {
 			if node, ok := value.(StNode); ok {
-				node.RefreshHandle()
+				node.RefreshHandle(false)
 			}
 			return true
 		})
 		err := HetuBroadcast()
-		common.Log.Info("hetu tick: ", err)
-
+		if err != nil {
+			common.Log.Errorf("hetu tick: %v", err)
+		}
 	}
-}
-
-func (_ *StNode) UnsupportClusterCommandHandle(z *zcl.ZclContext, cluster uint16, direction bool, disableDefaultResponse bool, sequenceNumber byte,
-	commandIdentifier byte, data interface{}) (resp []byte, err error) {
-	return nil, nil
 }
 
 func (node *StNode) getState() byte {
 	now := time.Now()
+
+	if node.LastRecvTime == AnnouceFlagTime { //announce但没有报文上来
+		return C4_STATE_CONNECTING
+	}
 
 	timeout := C4_MAX_OFFLINE_TIMEOUT * time.Second
 	if now.Sub(node.LastRecvTime) > timeout {
 		return C4_STATE_OFFLINE
 	}
 	return C4_STATE_ONLINE
-
 }
 
 func removeDeviceAndNode(node *StNode) {
@@ -142,158 +136,47 @@ func removeDeviceAndNode(node *StNode) {
 }
 
 // RefreshHandle 收到报文发生变化，或定时刷新时调用
-func (node *StNode) RefreshHandle() {
-	if node.ToBeDeleted {
-		common.Log.Debugf("HetuNodeStatusHandler delete")
-		if C4Callbacks.C4NodeStatusHandler != nil {
-			C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_DELETED, 0)
-		}
-		Nodes.Delete(node.NodeID)
-		common.Log.Infof("node map delete 0x%016x", node.Eui64)
-		return
-	}
+func (node *StNode) RefreshHandle(forceReport bool) {
 
 	newState := node.getState()
 	common.Log.Debugf("newState:%d", newState)
 
-	if newState != node.State {
+	if newState != node.State || forceReport {
 		if newState == C4_STATE_ONLINE {
-			if node.State < C4_STATE_ONLINE && node.Newjoin { //初次入网，且NULL、CONNECTING变成ONLINE，要检查passport，不允许的踢出
-				if passportMatch(fmt.Sprintf("%016x", node.Eui64)) >= 0 {
-					common.Log.Infof("node 0x%016x join network", node.Eui64)
-				} else {
-					common.Log.Errorf("reject node 0x%016x, remove it", node.Eui64)
-					removeDeviceAndNode(node)
-					return
-				}
+			if node.State < C4_STATE_ONLINE { //初次入网，且NULL、CONNECTING变成ONLINE，要检查passport，不允许的踢出
+				common.Log.Infof("node 0x%016x online", node.Eui64)
 			} else {
 				common.Log.Infof("node 0x%016x reonline", node.Eui64)
 			}
 			common.Log.Debugf("HetuNodeStatusHandler online")
 			if C4Callbacks.C4NodeStatusHandler != nil {
-				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_ONLINE, 0)
+				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_STATE_ONLINE, 0)
 			}
 		} else if newState == C4_STATE_OFFLINE {
 			common.Log.Infof("node 0x%016x offline", node.Eui64)
 			common.Log.Debugf("HetuNodeStatusHandler offline")
 			if C4Callbacks.C4NodeStatusHandler != nil {
-				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_NODE_STATUS_OFFLINE, 0)
+				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_STATE_OFFLINE, 0)
 			}
 		}
 		node.State = newState
 	}
 	Nodes.Store(node.NodeID, *node) // map中存储
-	common.Log.Info("4 RefreshHandle: ", node.NodeID)
-
 }
 
-// StPermission 发送SetPermission请求时参数的结构
-type StPermission struct {
-	Duration  byte          `json:"duration"`
-	Passports []*StPassport `json:"passports"`
-}
+func SetPermission(duration byte) (err error) {
+	common.Log.Debugf("Permit join for %d seconds", duration)
 
-type StPassport struct {
-	MAC string `json:"mac"`
-}
-
-var allPassPorts []*StPassport
-
-//返回Match的字符个数，不含x
-func checkPassportMAC(mac string, ppMac string) (match int) {
-	if len([]rune(mac)) != 16 {
-		common.Log.Errorf("MAC len not 16: %s", mac)
-		return -1
-	}
-	for i, c := range mac {
-		ppc := []rune(ppMac)[i]
-		if !(((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f'))) {
-			return -1
-		}
-		if ppc == 'x' {
-			continue
-		}
-		if ppc != c {
-			return -1
-		}
-		match++
-	}
-	return
-}
-
-func passportMatch(mac string) (maxHit int) {
-	maxHit = -1
-	if allPassPorts != nil {
-		for _, p := range allPassPorts {
-			match := checkPassportMAC(mac, p.MAC)
-			if match > maxHit {
-				maxHit = match
-				if maxHit >= 16 {
-					break
-				}
-			}
-		}
-	}
-	return
-}
-
-//16位hex字符或前置若干个x都是合法的
-func isPassportMACValid(mac string) bool {
-	leadingx := true
-	if len([]rune(mac)) != 16 {
-		common.Log.Errorf("MAC len not 16: %s", mac)
-		return false
-	}
-	for _, c := range mac {
-		//hex字符一定正确
-		if ((c >= '0') && (c <= '9')) || ((c >= 'a') && (c <= 'f')) {
-			leadingx = false //出现了hex字符
-			continue
-		}
-		//
-		if (c != 'x') || (leadingx == false) {
-			return false
-		}
-	}
-	return true
-}
-
-func SetPermission(permission *StPermission) (err error) {
-	common.Log.Debugf("SetPermission %+v", *permission)
-	if permission == nil {
-		err = fmt.Errorf("C4SetPassports permission=NULL")
-		return
-	}
-	if permission.Passports == nil || len(permission.Passports) == 0 {
-		err = fmt.Errorf("C4SetPassports passports=NULL")
-		return
-	}
-	common.Log.Debugf("permision to ...")
-	for i, p := range permission.Passports {
-		if p != nil {
-			common.Log.Debugf("%d: MAC=%s", i, p.MAC)
-			if isPassportMACValid(p.MAC) == false {
-				err = fmt.Errorf("C4SetPassports passport %d mac -%s- invalid", i, p.MAC)
-				return
-			}
-		}
-	}
-	allPassPorts = permission.Passports
-
-	err = ezsp.EzspPermitJoining(permission.Duration)
+	err = ezsp.EzspPermitJoining(duration)
 	if err != nil {
 		err = fmt.Errorf("EzspPermitJoining failed: %v", err)
 	}
-
 	return
 }
 
-func C4Init() {
-	ezsp.NcpCallbacks.NcpTrustCenterJoinHandler = TrustCenterJoinHandler
+func Init() {
 	ezsp.NcpCallbacks.NcpMessageSentHandler = MessageSentHandler
 	ezsp.NcpCallbacks.NcpIncomingMessageHandler = IncomingMessageHandler
-	ezsp.NcpCallbacks.NcpIncomingSenderEui64Handler = IncomingSenderEui64Handler
-
 }
 
 func HetuBroadcast() error {
@@ -301,45 +184,6 @@ func HetuBroadcast() error {
 	message := []byte{0x78, 0x87, 0x1b}
 	_, err := ezsp.EzspSendBroadcast(ezsp.EMBER_BROADCAST_ADDRESS, &apsFrame, 30, 0, message)
 	return err
-}
-
-func TrustCenterJoinHandler(newNodeId uint16,
-	newNodeEui64 uint64,
-	deviceUpdateStatus byte,
-	joinDecision byte,
-	parentOfNewNode uint16) {
-
-	fmt.Printf("TrustCenterJoinHandler")
-
-	now := time.Now()
-	var node StNode
-	value, ok := Nodes.Load(newNodeId) // 从map中加载
-	if ok {
-		if node, ok = value.(StNode); !ok {
-			common.Log.Errorf("Nodes map unsupported type")
-			return
-		}
-		node.Newjoin = false //已经在node表里的，不认为Newjoin
-		node.LastRecvTime = now
-	} else {
-		node = StNode{NodeID: newNodeId, Eui64: newNodeEui64, LastRecvTime: now}
-		node.Newjoin = true
-	}
-
-	if (deviceUpdateStatus == ezsp.EMBER_STANDARD_SECURITY_UNSECURED_JOIN) ||
-		(deviceUpdateStatus == ezsp.EMBER_HIGH_SECURITY_UNSECURED_JOIN) {
-	} else if (deviceUpdateStatus == ezsp.EMBER_STANDARD_SECURITY_SECURED_REJOIN) ||
-		(deviceUpdateStatus == ezsp.EMBER_STANDARD_SECURITY_UNSECURED_REJOIN) ||
-		(deviceUpdateStatus == ezsp.EMBER_HIGH_SECURITY_SECURED_REJOIN) ||
-		(deviceUpdateStatus == ezsp.EMBER_HIGH_SECURITY_UNSECURED_REJOIN) {
-		node.Newjoin = false
-	} else if deviceUpdateStatus == ezsp.EMBER_DEVICE_LEFT {
-		node.ToBeDeleted = true
-	} else {
-		common.Log.Errorf("unknown deviceUpdateStatus = 0x%x newNodeId = 0x%04x\r\n", deviceUpdateStatus, newNodeId)
-		return
-	}
-	node.RefreshHandle()
 }
 
 func MessageSentHandler(outgoingMessageType byte,
@@ -370,57 +214,6 @@ func MessageSentHandler(outgoingMessageType byte,
 	}
 }
 
-//存储
-var orphanEui64 uint64
-var orphanEui64RecvTime time.Time
-
-func IncomingSenderEui64Handler(eui64 uint64) {
-	now := time.Now()
-
-	common.Log.Debugf("IncomingSenderEui64Handler 0x%x", eui64)
-	nodeID := findNodeIDbyEui64(eui64)
-
-	if nodeID == ezsp.EMBER_NULL_NODE_ID { //在Nodes中找不到的话，查询NCP是否有保存
-		var err error
-		nodeID, err = ezsp.EzspLookupNodeIdByEui64(eui64)
-		if err != nil { //NCP也没有的话，作为orphan保存，与即将收到的incomingmessage匹配
-			orphanEui64 = eui64
-			orphanEui64RecvTime = now
-			common.Log.Errorf("Incoming message lookup nodeID failed: %v", err)
-			return
-		}
-	}
-	var node StNode
-	value, ok := Nodes.Load(nodeID) // 从map中加载
-	if ok {
-		if node, ok = value.(StNode); !ok {
-			common.Log.Errorf("Nodes map unsupported type")
-			return
-		}
-		node.Eui64 = eui64
-		node.LastRecvTime = now
-	} else {
-		node = StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: now}
-	}
-	Nodes.Store(node.NodeID, node) // map中存储
-	common.Log.Info("5 IncomingSenderEui64Handler: ", node.NodeID)
-}
-
-func Refresh(nodeID uint16) bool {
-	var node StNode
-	value, ok := Nodes.Load(nodeID) // 从map中加载
-	if ok {
-		if node, ok = value.(StNode); !ok {
-			common.Log.Errorf("Nodes map unsupported type")
-			return false
-		}
-		node.RefreshHandle()
-		return true
-	}
-	return false
-
-}
-
 func IncomingMessageHandler(incomingMessageType byte,
 	apsFrame *ezsp.EmberApsFrame,
 	lastHopLqi byte,
@@ -435,49 +228,57 @@ func IncomingMessageHandler(incomingMessageType byte,
 		if apsFrame.ClusterId == 0x0013 { //device announce
 			nodeID := binary.LittleEndian.Uint16(message[1:])
 			eui64 := binary.LittleEndian.Uint64(message[3:])
-			StoreNode(&StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: now})
+			var node StNode
+			node = StNode{NodeID: nodeID, Eui64: eui64, LastRecvTime: AnnouceFlagTime}
+			StoreNode(&node)
+			node.RefreshHandle(false)
 			common.Log.Debugf("2 zdo announce: 0x%04x,%016x", nodeID, eui64)
-			Refresh(sender)
 		}
 	} else {
 		if incomingMessageType == ezsp.EMBER_INCOMING_UNICAST {
-			var node StNode
-			value, ok := Nodes.Load(sender) // 从map中加载
-			if ok {
-				if node, ok = value.(StNode); !ok {
-					common.Log.Errorf("Nodes map unsupported type")
-					return
-				}
-				common.Log.Debugf("Nodes map get %016x", node.Eui64)
-				node.LastRecvTime = now
-			} else {
-				eui64, err := ezsp.EzspLookupEui64ByNodeId(sender)
-				if err != nil {
-					common.Log.Errorf("Incoming message lookup eui64 failed: %v", err)
-					//orphanEui64是200ms以内的，认为是同一个node
-					if now.Sub(orphanEui64RecvTime) > time.Millisecond*200 {
+			if apsFrame.ProfileId == 0xabcd && apsFrame.ClusterId == 0xabde && (len(message) == 38 || len(message) == 70) && crc16.CRC16MODBUS(message) == 0 {
+				// 收到一条合法的hetu报文
+				var forceReport bool
+				var node StNode
+				value, ok := Nodes.Load(sender) // 从map中加载
+				if ok {
+					if node, ok = value.(StNode); !ok {
+						common.Log.Errorf("Nodes map unsupported type")
 						return
 					}
-					common.Log.Warnf("match with EUI64=%016x recved %v ago", orphanEui64, now.Sub(orphanEui64RecvTime))
-					eui64 = orphanEui64
-				}
+					common.Log.Debugf("Nodes map get %016x", node.Eui64)
+					node.LastRecvTime = now
+					if node.Addr != message[5] {
+						common.Log.Warnf("Node %016x digital addr changed from %d to %d", node.Eui64, node.Addr, message[5])
+						node.Addr = message[5]
+						forceReport = true
+					}
 
-				common.Log.Debugf("EzspLookupEui64ByNodeId get %016x", eui64)
-				node = StNode{NodeID: sender, Eui64: eui64, LastRecvTime: now}
-			}
-			StoreNode(&node)
-			Refresh(sender)
-			common.Log.Debugf("3 HetuIncomingMessageHandler: %d", node.NodeID)
-			if C4Callbacks.C4IncomingMessageHandler != nil {
-				if node.Eui64 != 0 {
-					C4Callbacks.C4IncomingMessageHandler(node.Eui64, apsFrame.ProfileId, apsFrame.ClusterId, apsFrame.DestinationEndpoint, apsFrame.SourceEndpoint, message)
 				} else {
-					common.Log.Errorf("recv msg from NodeID 0x%04x without EUI64", node.NodeID)
+					eui64, err := ezsp.EzspLookupEui64ByNodeId(sender)
+					if err != nil {
+						common.Log.Errorf("Incoming message lookup eui64 failed: %v", err)
+						return
+					}
+
+					common.Log.Debugf("EzspLookupEui64ByNodeId get %016x", eui64)
+					node = StNode{NodeID: sender, Eui64: eui64, Addr: message[5], LastRecvTime: now}
 				}
+				StoreNode(&node)
+				node.RefreshHandle(forceReport)
+				common.Log.Debugf("3 HetuIncomingMessageHandler: %d", node.NodeID)
+				if C4Callbacks.C4IncomingMessageHandler != nil {
+					if node.Eui64 != 0 {
+						C4Callbacks.C4IncomingMessageHandler(node.Eui64, message, now)
+					} else {
+						common.Log.Errorf("recv msg from NodeID 0x%04x without EUI64", node.NodeID)
+					}
+				}
+			} else {
+				common.Log.Errorf("Incoming invalid message Profile=0x%04x Cluster=0x%04x CRC=0x%04x", apsFrame.ProfileId, apsFrame.ClusterId, crc16.CRC16MODBUS(message))
 			}
 		}
 	}
-
 }
 
 var unicastTagSequence = byte(0)
