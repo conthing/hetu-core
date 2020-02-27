@@ -85,7 +85,7 @@ func NetworkSet(settings *StNetworkSettings) {
 func networkInit() {
 	common.Log.Infof("network type %s", networkSettings.NetworkType)
 	if networkSettings.NetworkType == "hetu" {
-		hetu.C4Init()
+		hetu.Init()
 	} else {
 		c4.C4Init()
 	}
@@ -160,14 +160,11 @@ func TickRunning(errs chan error) {
 	//}
 	//common.Log.Infof("C4SetPermission for 60 seconds")
 
-	// perm := hetu.StPermission{Duration: 255}
-	// perm.Passports = make([]*hetu.StPassport, 1)
-	// perm.Passports[0] = &hetu.StPassport{MAC: "xxxxxxxxxxxxxxxx"}
-	// err = hetu.SetPermission(&perm)
-	// if err != nil {
-	// 	common.Log.Errorf("SetPermission failed: %v", err)
-	// }
-	// common.Log.Infof("SetPermission OK")
+	//err = hetu.SetPermission(255)
+	//if err != nil {
+	//	common.Log.Errorf("SetPermission failed: %v", err)
+	//}
+	//common.Log.Infof("SetPermission OK")
 
 	//go hetu.RemoveNetwork()
 
