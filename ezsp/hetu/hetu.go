@@ -44,7 +44,7 @@ type StNode struct {
 type StC4Callbacks struct {
 	C4MessageSentHandler     func(eui64 uint64, profileId uint16, clusterId uint16, localEndpoint byte, remoteEndpoint byte, message []byte, success bool)
 	C4IncomingMessageHandler func(eui64 uint64, message []byte, recvTime time.Time)
-	C4NodeStatusHandler      func(eui64 uint64, nodeID uint16, status byte, deviceType byte)
+	C4NodeStatusHandler      func(eui64 uint64, nodeID uint16, status byte, addr byte)
 }
 
 var C4Callbacks StC4Callbacks
@@ -150,13 +150,13 @@ func (node *StNode) RefreshHandle(forceReport bool) {
 			}
 			common.Log.Debugf("HetuNodeStatusHandler online")
 			if C4Callbacks.C4NodeStatusHandler != nil {
-				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_STATE_ONLINE, 0)
+				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_STATE_ONLINE, node.Addr)
 			}
 		} else if newState == C4_STATE_OFFLINE {
 			common.Log.Infof("node 0x%016x offline", node.Eui64)
 			common.Log.Debugf("HetuNodeStatusHandler offline")
 			if C4Callbacks.C4NodeStatusHandler != nil {
-				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_STATE_OFFLINE, 0)
+				C4Callbacks.C4NodeStatusHandler(node.Eui64, node.NodeID, C4_STATE_OFFLINE, node.Addr)
 			}
 		}
 		node.State = newState
