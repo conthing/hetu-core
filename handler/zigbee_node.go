@@ -4,6 +4,7 @@ import (
 	"hetu-core/dto"
 	"hetu-core/redis"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,8 +18,13 @@ func GetZigbeeNodes(c *gin.Context) {
 			Message: err.Error(),
 		})
 	}
+	znodes := make([]dto.ZNode, len(nodes))
+	for index, node := range nodes {
+		znodes[index].Node = node
+		znodes[index].Mac = strconv.FormatUint(node.Eui64, 16)
+	}
 	c.JSON(http.StatusOK, dto.Resp{
 		Code: dto.Success,
-		Data: nodes,
+		Data: znodes,
 	})
 }

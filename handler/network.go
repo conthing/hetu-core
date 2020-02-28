@@ -32,6 +32,19 @@ func NetworkHandler(c *gin.Context) {
 		common.Log.Infof("SetPermission OK")
 		// -------------
 		c.JSON(http.StatusOK, &dto.Resp{Code: dto.Success, Message: "入网开始"})
+	case "StopJoin":
+		err = hetu.SetPermission(0)
+		if err != nil {
+			common.Log.Errorf("StopJoin failed: %v", err)
+			c.JSON(http.StatusBadGateway, &dto.Resp{
+				Code:    dto.CreateZigbeeNetFailed,
+				Message: "StopJoin Failed",
+			})
+			return
+		}
+		common.Log.Infof("StopJoin OK")
+		// -------------
+		c.JSON(http.StatusOK, &dto.Resp{Code: dto.Success, Message: "StopJoin"})
 	case "CreateZigbeeNet":
 		err = hetu.FormNetwork(0xff)
 		if err != nil {

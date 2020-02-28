@@ -52,3 +52,9 @@ type ZigbeeNode struct {
 	NodeID uint16
 	Addr   byte
 }
+
+// ZNode 客户端接受
+type ZNode struct {
+	Mac  string
+	Node ZigbeeNode
+}

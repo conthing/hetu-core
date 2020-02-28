@@ -355,14 +355,14 @@ func RemoveNetwork() (err error) {
 	if !ezsp.MeshStatusUp {
 		return ErrMeshNotExist
 	}
-	notEmpty := false
-	Nodes.Range(func(key, value interface{}) bool {
-		notEmpty = true
-		return false
-	})
-	if notEmpty {
-		return ErrMeshNotEmpty
-	}
+	//notEmpty := false
+	// Nodes.Range(func(key, value interface{}) bool {
+	// 	notEmpty = true
+	// 	return false
+	// })
+	// if notEmpty {
+	// 	return ErrMeshNotEmpty
+	// }
 	err = ezsp.EzspLeaveNetwork()
 	return
 }

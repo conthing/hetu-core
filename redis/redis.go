@@ -130,21 +130,21 @@ func SaveZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
 func ReadSaveZigbeeNodeTable() map[uint64]hetu.StNode {
 	nodesMap := make(map[uint64]hetu.StNode)
 	// PART 1 读取节点列表
-	var ZigbeeNodeList []string
-	key := "ZigbeeNodeList"
+	ZigbeeNodeList := make([]string, 0)
+	key := "ZigbeeNodeSet"
 	err := Client.Do(radix.Cmd(&ZigbeeNodeList, "smembers", key))
 	if err != nil {
 		common.Log.Error("读取节点表失败", err)
 		common.Log.Warn("使用空记录")
 		return nodesMap
 	}
-	common.Log.Info("[PART 1] 读取节点列表成功")
+	common.Log.Info("[PART 1] 读取节点列表成功", ZigbeeNodeList)
 
 	// PART 2 加载节点列表
 	NodeList := make([]dto.ZigbeeNode, len(ZigbeeNodeList))
 	CmdActionList := make([]radix.CmdAction, 0)
-	for index, node := range NodeList {
-		CmdActionList = append(CmdActionList, radix.Cmd(&node, "HGETALL", ZigbeeNodeList[index]))
+	for index := range NodeList {
+		CmdActionList = append(CmdActionList, radix.Cmd(&NodeList[index], "HGETALL", ZigbeeNodeList[index]))
 	}
 	p := radix.Pipeline(CmdActionList...)
 	err = Client.Do(p)
@@ -157,8 +157,8 @@ func ReadSaveZigbeeNodeTable() map[uint64]hetu.StNode {
 	// PART 3 读取节点时间
 	timeList := make([]time.Time, len(ZigbeeNodeList))
 	CmdActionList = make([]radix.CmdAction, 0)
-	for index, time := range timeList {
-		CmdActionList = append(CmdActionList, radix.Cmd(&time, "HGET", ZigbeeNodeList[index], "LastRecvTime"))
+	for index := range timeList {
+		CmdActionList = append(CmdActionList, radix.Cmd(&timeList[index], "HGET", ZigbeeNodeList[index], "LastRecvTime"))
 	}
 	p = radix.Pipeline(CmdActionList...)
 	err = Client.Do(p)
@@ -174,6 +174,7 @@ func ReadSaveZigbeeNodeTable() map[uint64]hetu.StNode {
 		stNode.LastRecvTime = timeList[index]
 		stNode.Eui64 = node.Eui64
 		stNode.NodeID = node.NodeID
+		stNode.Addr = node.Addr
 		// stNode.Addr = node.Addr
 		nodesMap[node.Eui64] = stNode
 	}
@@ -186,7 +187,7 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 	NodeList := make([]dto.ZigbeeNode, 0)
 	// PART 1 读取节点列表
 	var ZigbeeNodeList []string
-	key := "ZigbeeNodeList"
+	key := "ZigbeeNodeSet"
 	err := Client.Do(radix.Cmd(&ZigbeeNodeList, "smembers", key))
 	if err != nil {
 		common.Log.Error("读取节点表失败", err)
@@ -197,8 +198,8 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 	// PART 2 加载节点列表
 	NodeList = make([]dto.ZigbeeNode, len(ZigbeeNodeList))
 	CmdActionList := make([]radix.CmdAction, 0)
-	for index, node := range NodeList {
-		CmdActionList = append(CmdActionList, radix.Cmd(&node, "HGETALL", ZigbeeNodeList[index]))
+	for index := range NodeList {
+		CmdActionList = append(CmdActionList, radix.Cmd(&NodeList[index], "HGETALL", ZigbeeNodeList[index]))
 	}
 	p := radix.Pipeline(CmdActionList...)
 	err = Client.Do(p)
@@ -206,6 +207,6 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 		common.Log.Error("加载节点列表失败", err)
 		return nil, err
 	}
-	common.Log.Info("[PART 2] 加载节点列表成功")
+	common.Log.Info("[PART 2] 加载节点列表成功", NodeList)
 	return NodeList, nil
 }
