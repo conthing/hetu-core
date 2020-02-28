@@ -142,11 +142,11 @@ func TickRunning(errs chan error) {
 	}
 	common.Log.Infof("NCP EUI64 = %016x", eui64)
 
-	//err = hetu.FormNetwork(0xff)
+	//err = ezsp.NcpFormNetwork(0xff,networkSettings.SecurityLevel != 0)
 	//if err != nil {
-	//	common.Log.Errorf("FormNetwork failed: %v", err)
+	//	common.Log.Errorf("NcpFormNetwork failed: %v", err)
 	//}
-	//common.Log.Infof("FormNetwork OK")
+	//common.Log.Infof("NcpFormNetwork OK")
 
 	err = ezsp.EzspNetworkInit()
 	if err != nil {

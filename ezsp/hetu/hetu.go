@@ -26,6 +26,7 @@ const (
 	C4_MAX_OFFLINE_TIMEOUT = 90 //未收到报文达到90秒，标记为offline
 )
 
+var ZeroTime = time.Unix(0, 0)           // 1970-1-1 00:00:00 既没announce也没有收到有效报文
 var AnnouceFlagTime = time.Unix(3661, 0) // 1970-1-1 01:01:01 表示设备已经announce但还没有收到有效报文的lastrecvtime
 
 var ErrMeshNotExist = errors.New("Mesh not exist")
@@ -247,13 +248,14 @@ func IncomingMessageHandler(incomingMessageType byte,
 						return
 					}
 					common.Log.Debugf("Nodes map get %016x", node.Eui64)
-					node.LastRecvTime = now
 					if node.Addr != message[5] {
-						common.Log.Warnf("Node %016x digital addr changed from %d to %d", node.Eui64, node.Addr, message[5])
+						if node.LastRecvTime != AnnouceFlagTime && node.LastRecvTime != ZeroTime {
+							common.Log.Warnf("Node %016x digital addr changed from %d to %d", node.Eui64, node.Addr, message[5])
+						}
 						node.Addr = message[5]
 						forceReport = true
 					}
-
+					node.LastRecvTime = now
 				} else {
 					eui64, err := ezsp.EzspLookupEui64ByNodeId(sender)
 					if err != nil {
@@ -377,6 +379,6 @@ func FormNetwork(radioChannel byte) (err error) {
 	if ezsp.MeshStatusUp {
 		return ErrMeshAlreadyExist
 	} else {
-		return ezsp.NcpFormNetwork(radioChannel)
+		return ezsp.NcpFormNetwork(radioChannel, false)
 	}
 }

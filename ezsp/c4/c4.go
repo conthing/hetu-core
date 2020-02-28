@@ -289,7 +289,7 @@ func (node *StNode) RefreshHandle() {
 		if newState == C4_STATE_ONLINE {
 			if node.State < C4_STATE_ONLINE && node.Newjoin { //初次入网，且NULL、CONNECTING变成ONLINE，要检查passport，不允许的踢出
 				if passportMatch(node.PS, fmt.Sprintf("%016x", node.Eui64)) >= 0 {
-					common.Log.Infof("%s node 0x%016x join network", node.PS, node.Eui64)
+					common.Log.Infof("%s node 0x%016x join C4 network", node.PS, node.Eui64)
 				} else {
 					common.Log.Errorf("reject node 0x%016x, remove it", node.Eui64)
 					removeDeviceAndNode(node)
