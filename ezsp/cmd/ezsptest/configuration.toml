@@ -1,11 +1,12 @@
 [Serial]
-Name = "COM4"
+Name = "COM3"
 Baud = 57600
 RtsCts = false
 
 [TraceSettings]
 #AshTraceOn = true
 EzspCallbackTraceOn = true
+#EzspFrameTraceOn = true
 NcpTraceOn = true
 NcpFormTraceOn = true
 
