@@ -28,3 +28,8 @@ func GetZigbeeNodes(c *gin.Context) {
 		Data: znodes,
 	})
 }
+
+// GetNodeRecentHexMessage 获取最新的Node
+func GetNodeRecentHexMessage(c *gin.Context) {
+
+}
