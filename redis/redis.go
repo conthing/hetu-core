@@ -210,3 +210,29 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 	common.Log.Info("[PART 2] 加载节点列表成功", NodeList)
 	return NodeList, nil
 }
+
+// GetNodeLatestMessage 获取节点的最新message 根据 eui64
+func GetNodeLatestMessage(mac string) (*dto.ZigbeeDeviceMessage, error) {
+
+	// Stage 1 获取 uuid
+	var res []string
+	macGroupKey := "mac2uuid:" + mac
+	err := Client.Do(radix.Cmd(&res, "LRANGE", macGroupKey, "-1", "-1"))
+	if err != nil {
+		common.Log.Error("读取 uuid 错误", err)
+		return nil, err
+	}
+
+	// Stage 2 获取 message
+	uuid := res[0]
+	var message dto.ZigbeeDeviceMessage
+	err = Client.Do(radix.Cmd(&message, "HGETALL", uuid))
+	if err != nil {
+		common.Log.Error("获取 message 错误", err)
+		return nil, err
+	}
+
+	common.Log.Info("获取节点的最新 message 成功")
+	return &message, nil
+
+}
