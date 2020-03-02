@@ -14,7 +14,7 @@ func Run(port int) {
 	{
 		v1.PUT("/network", handler.NetworkHandler)
 		v1.GET("/nodes", handler.GetZigbeeNodes)
-
+		v1.GET("/nodes/:mac", handler.GetNodeLatestMessage)
 	}
 	r.Run(fmt.Sprintf(":%d", port))
 }

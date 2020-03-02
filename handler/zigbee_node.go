@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/hex"
 	"hetu-core/dto"
 	"hetu-core/redis"
 	"net/http"
@@ -29,7 +30,24 @@ func GetZigbeeNodes(c *gin.Context) {
 	})
 }
 
-// GetNodeRecentHexMessage 获取最新的Node
-func GetNodeRecentHexMessage(c *gin.Context) {
+// GetNodeLatestMessage 获取最新的Node
+func GetNodeLatestMessage(c *gin.Context) {
+	mac := c.Param("mac")
+	message, err := redis.GetNodeLatestMessage(mac)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Resp{
+			Code:    dto.GetNodeLatestMessageFailed,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	str := hex.EncodeToString(message.Message)
+
+	c.JSON(http.StatusOK, dto.Resp{
+		Code: dto.Success,
+		Data: str,
+	})
 
 }

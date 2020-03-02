@@ -17,6 +17,8 @@ const (
 	RemoveZigbeeNetFailed
 
 	GetNodeListFailed
+
+	GetNodeLatestMessageFailed
 )
 
 // Network Zigbee 网络控制
