@@ -19,6 +19,7 @@ func main() {
 
 	mqtt.Connect("hetu_mqtt_post")
 	errs := make(chan error, 3)
+	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)
 
 	go zgb.TickRunning(errs)
 
