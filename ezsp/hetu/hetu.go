@@ -180,10 +180,16 @@ func Init() {
 	ezsp.NcpCallbacks.NcpIncomingMessageHandler = IncomingMessageHandler
 }
 
+var hndl_cnt byte
+
 func HetuBroadcast() error {
 	apsFrame := ezsp.EmberApsFrame{ProfileId: 0xabcd, ClusterId: 0xabef, SourceEndpoint: 2, DestinationEndpoint: 2}
-	message := []byte{0x78, 0x87, 0x1b}
-	_, err := ezsp.EzspSendBroadcast(ezsp.EMBER_BROADCAST_ADDRESS, &apsFrame, 30, 0, message)
+	hndl_cnt++
+	if hndl_cnt >= 0xfe {
+		hndl_cnt = 0
+	}
+	message := []byte{0x78, 0x87, hndl_cnt}
+	_, err := ezsp.EzspSendBroadcast(ezsp.EMBER_SLEEPY_BROADCAST_ADDRESS, &apsFrame, 30, 0, message)
 	return err
 }
 
