@@ -14,7 +14,7 @@ BUILD_TIME:=$(shell date "+%F %T")
 GOFLAGS=-ldflags "-X github.com/conthing/utils/common.Version=$(VERSION)\
  -X 'github.com/conthing/utils/common.BuildTime=${BUILD_TIME}'"
 
-GOARM=GOARCH=arm go
+GOARM=GOARCH=arm GOOS=linux go
 GOAMD64=GOARCH=amd64 go
 ifneq (0,$(USEZEROMQ))
 GOARM=PKG_CONFIG_PATH=/usr/local/zeromq-4.2.2/arm/lib/pkgconfig GOARCH=arm CC=arm-linux-gnueabihf-gcc CGO_ENABLED=1 CGO_CFLAGS="-g -O2 -I/usr/local/zeromq-4.2.2/arm/include" CGO_LDFLAGS="-g -O2 -L/usr/local/zeromq-4.2.2/arm/lib -L/usr/arm-linux-gnueabihf/lib -Wl,-rpath-link /usr/local/zeromq-4.2.2/arm/lib -Wl,-rpath-link /usr/arm-linux-gnueabihf/lib" go
@@ -23,7 +23,6 @@ endif
 
 MICROSERVICESARM=output/arm/$(SERVICENAME)
 MICROSERVICESAMD64=output/amd64/$(SERVICENAME)
-#ifeq (windows,$(findstring(windows, $(shell go env | grep GOOS))))
 ifeq (windows,$(shell go env GOOS))
 MICROSERVICESAMD64=output/amd64/$(SERVICENAME).exe
 endif
