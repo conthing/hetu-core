@@ -16,8 +16,8 @@ func main() {
 	config.Service()
 	redis.Connect()
 	ezsp.InitEzspModule()
-
-	mqtt.Connect("hetu_mqtt_post")
+	initInfo := redis.GetPubMQTTInfo()
+	mqtt.Init(initInfo)
 	errs := make(chan error, 3)
 	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)
 

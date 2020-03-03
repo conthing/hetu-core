@@ -60,3 +60,19 @@ type ZNode struct {
 	Mac  string
 	Node ZigbeeNode
 }
+
+// PubHTTPInfo HTTP上报设置结构体
+type PubHTTPInfo struct {
+	Address string `json:"address"`
+	Port    uint16 `json:"port"`
+	URL     string `json:"URL"`
+	Enable  bool   `json:"enable"`
+}
+
+// PubMQTTInfo MQTT上报设置
+type PubMQTTInfo struct {
+	Address string `json:"address"`
+	Port    uint16 `json:"port"`
+	ID      string `json:"id"`
+	Enable  bool   `json:"enable"`
+}

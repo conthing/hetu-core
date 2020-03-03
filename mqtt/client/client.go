@@ -1,19 +1,39 @@
 package client
 
 import (
+	"fmt"
+	"hetu-core/dto"
+	"sync"
+
 	"github.com/conthing/utils/common"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
 var client MQTT.Client
+var rw sync.RWMutex
 
-// MQTTURL MQTTURL
-var MQTTURL = "tcp://mqtt.conthing.com:1883"
+// Init 初始化 MQTT 连接
+func Init(info *dto.PubMQTTInfo) {
+	// 不会报 nil 错误
+	if info.Enable {
+		Connect(info)
+	}
+}
+
+// ReConnect 重新连接
+// 用写锁锁住
+func ReConnect(info *dto.PubMQTTInfo) {
+	rw.Lock()
+	client.Disconnect(100)
+	Connect(info)
+	rw.Unlock()
+}
 
 // Connect 连接 id 可以是本机的 MAC
-func Connect(id string) {
-	opts := MQTT.NewClientOptions().AddBroker(MQTTURL)
-	opts.SetClientID(id)
+func Connect(info *dto.PubMQTTInfo) {
+	server := fmt.Sprintf("%s:%d", info.Address, info.Port)
+	opts := MQTT.NewClientOptions().AddBroker(server)
+	opts.SetClientID(info.ID)
 
 	client = MQTT.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
@@ -22,13 +42,16 @@ func Connect(id string) {
 }
 
 // Publish 发布消息
-func Publish(topic string, payload interface{}) error {
+// 读锁锁住
+func Publish(topic string, payload interface{}) {
+	rw.RLock()
 	err := client.Publish(topic, 0, false, payload).Error()
+	rw.RUnlock()
 	if err != nil {
-		return err
+		common.Log.Error("mqtt 发送失败")
+		return
 	}
 	common.Log.Infof("topic:%s 发布成功", topic)
-	return nil
 }
 
 // Subscribe 订阅消息

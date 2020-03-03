@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"hetu-core/dto"
+	"hetu-core/http"
 	mqtt "hetu-core/mqtt/client"
 	"hetu-core/redis"
 	"os"
@@ -29,17 +30,23 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 		Addr:         binary.LittleEndian.Uint16(message),
 	}
 
-	// 发送到 MQTT
+	// 上传报文
 	mJSON, err := json.Marshal(m)
 	if err != nil {
 		common.Log.Error("序列化错误")
 		return
 	}
 
-	err = mqtt.Publish("zigbee_device", mJSON)
-	if err != nil {
-		common.Log.Error("mqtt 发送失败")
+	httpInfo := redis.GetPubHTTPInfo()
+	if httpInfo.Enable {
+		http.Publish(httpInfo, mJSON)
 	}
+
+	mqttInfo := redis.GetPubMQTTInfo()
+	if mqttInfo.Enable {
+		mqtt.Publish("zigbee_device", mJSON)
+	}
+
 	// 持久化 Message
 	redis.SaveZigbeeMessage(m)
 

@@ -16,6 +16,10 @@ func Run(port int) {
 		v1.GET("/nodes", handler.GetZigbeeNodes)
 		v1.GET("/nodes/:mac", handler.GetNodeLatestMessage)
 		v1.GET("/version", handler.GetVersionInfo)
+		v1.POST("/PubHTTP", handler.SetPubHTTP)
+		v1.GET("/PubHTTP", handler.GetPubHTTPInfo)
+		v1.POST("/PubMQTT", handler.SetPubMQTT)
+		v1.GET("/PubMQTT", handler.GetPubMQTTInfo)
 	}
 	r.Run(fmt.Sprintf(":%d", port))
 }
