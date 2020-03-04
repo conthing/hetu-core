@@ -8,5 +8,4 @@ func before() {
 
 func Test_ReviewPendingKeys(t *testing.T) {
 	Connect()
-	ReviewPendingKeys()
 }

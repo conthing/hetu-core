@@ -42,6 +42,12 @@ type ZigbeeDeviceMessage struct {
 	UUID         uuid.UUID `json:"uuid"`
 }
 
+// PostMessageDTO 上报报文 结构体
+type PostMessageDTO struct {
+	Type string              `json:"type"`
+	Data ZigbeeDeviceMessage `json:"data"`
+}
+
 // ZigbeeNode 设备节点
 // NodeID     短地址
 // Addr       播码地址

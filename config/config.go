@@ -12,6 +12,9 @@ import (
 
 const configFile = "config.yaml"
 
+// Mac 全局变量 Mac 只读
+var Mac = common.GetSerialNumber()
+
 // Config 配置模型
 type Config struct {
 	Serial          Serial                `yaml:"serial"`

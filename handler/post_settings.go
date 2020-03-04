@@ -24,7 +24,7 @@ func SetPubHTTP(c *gin.Context) {
 
 // GetPubHTTPInfo 获取
 func GetPubHTTPInfo(c *gin.Context) {
-	info := redis.GetPubMQTTInfo()
+	info := redis.GetPubHTTPInfo()
 	c.JSON(http.StatusOK, info)
 }
 
