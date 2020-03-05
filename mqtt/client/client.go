@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"hetu-core/config"
 	"hetu-core/dto"
@@ -15,12 +16,28 @@ var client MQTT.Client
 var rw sync.RWMutex
 
 // Init 初始化 MQTT 连接
-func Init(info *dto.PubMQTTInfo) {
+func Init(info *dto.PubMQTTInfo, down func(rm *dto.ReceiveMessageDTO)) {
 	// 不会报 nil 错误
 	if info.Enable {
 		Connect(info)
-		// topic := fmt.Sprintf("/hetu/%s/command", config.Mac)
-		// Subscribe(topic)
+		topic := fmt.Sprintf("/hetu/%s/command", config.Mac)
+
+		fn := func(client MQTT.Client, message MQTT.Message) {
+			common.Log.Infof("MQTT 订阅消息报文 [%s]", message.Topic())
+			rm := new(dto.ReceiveMessageDTO)
+			err := json.Unmarshal(message.Payload(), rm)
+			if err != nil {
+				common.Log.Info("序列化失败")
+				return
+			}
+			if rm.Type == "" {
+				common.Log.Error("报文 type 为空")
+				return
+			}
+			down(rm)
+		}
+
+		Subscribe(topic, fn)
 	}
 }
 

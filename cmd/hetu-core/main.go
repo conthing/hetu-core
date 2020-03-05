@@ -16,10 +16,10 @@ import (
 func main() {
 	config.Service()
 	redis.Connect()
-	redis.SubScribe(proxy.Post)
+	redis.Subscribe(proxy.Post)
 	ezsp.InitEzspModule()
 	initInfo := redis.GetPubMQTTInfo()
-	mqtt.Init(initInfo)
+	mqtt.Init(initInfo, proxy.Down)
 
 	errs := make(chan error, 3)
 	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)

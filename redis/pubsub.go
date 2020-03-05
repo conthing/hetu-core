@@ -19,7 +19,7 @@ func InitPubSubConn() error {
 }
 
 // Publish redis 队列发送消息
-func Publish(topic string, data interface{}) {
+func Publish(topic string, data []byte) {
 	err := Client.Do(radix.FlatCmd(nil, "PUBLISH", topic, data))
 	if err != nil {
 		common.Log.Error("Publish redis 队列错误", err)

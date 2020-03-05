@@ -20,6 +20,7 @@ func Run(port int) {
 		v1.GET("/PubHTTP", handler.GetPubHTTPInfo)
 		v1.POST("/PubMQTT", handler.SetPubMQTT)
 		v1.GET("/PubMQTT", handler.GetPubMQTTInfo)
+		v1.POST("/command", handler.HandleCommand)
 	}
 	r.Run(fmt.Sprintf(":%d", port))
 }

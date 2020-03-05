@@ -1,20 +1,30 @@
 package proxy
 
 import (
+	"encoding/json"
 	"hetu-core/config"
 	"hetu-core/dto"
 	"hetu-core/http"
 	mqtt "hetu-core/mqtt/client"
 	"hetu-core/redis"
+
+	"github.com/conthing/utils/common"
 )
 
 // Down 下行消息
-func Down(rm dto.ReceiveMessageDTO) {
+func Down(rm *dto.ReceiveMessageDTO) {
 	if rm.Type == "zigbee" {
 		// 底层发送 zigbee 报文
+		common.Log.Info("TODO: 底层报文下发")
 		// todo
 	} else {
-		redis.Publish(rm.Type, rm)
+		rmJSON, err := json.Marshal(rm)
+		if err != nil {
+			common.Log.Error("序列化错误")
+			return
+		}
+		redis.Publish(rm.Type, rmJSON)
+		common.Log.Info("redis 下发消息成功")
 	}
 
 }
