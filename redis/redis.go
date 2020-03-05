@@ -21,6 +21,11 @@ func Connect() {
 	if err != nil {
 		log.Fatal("数据库连接失败", err)
 	}
+	err = InitPubSubConn()
+	if err != nil {
+		common.Log.Error("pubsub 连接失败", err)
+		return
+	}
 	common.Log.Info("redis 启动成功")
 }
 

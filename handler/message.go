@@ -3,10 +3,8 @@ package handler
 import (
 	"encoding/binary"
 	"encoding/json"
-	"hetu-core/config"
 	"hetu-core/dto"
-	"hetu-core/http"
-	mqtt "hetu-core/mqtt/client"
+	"hetu-core/proxy"
 	"hetu-core/redis"
 	"os"
 	"time"
@@ -33,22 +31,12 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 
 	// 上传报文
 	pm := dto.PostMessageDTO{Type: "zigbee", Data: m}
-	mJSON, err := json.Marshal(pm)
+	pmJSON, err := json.Marshal(pm)
 	if err != nil {
 		common.Log.Error("序列化错误")
 		return
 	}
-
-	httpInfo := redis.GetPubHTTPInfo()
-	if httpInfo.Enable {
-		http.Publish(httpInfo, mJSON)
-	}
-
-	mqttInfo := redis.GetPubMQTTInfo()
-	if mqttInfo.Enable {
-		topic := "/hetu/" + config.Mac + "/report"
-		mqtt.Publish(topic, mJSON)
-	}
+	proxy.Post(pmJSON)
 
 	// 持久化 Message
 	redis.SaveZigbeeMessage(&m)

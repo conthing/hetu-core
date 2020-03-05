@@ -42,10 +42,16 @@ type ZigbeeDeviceMessage struct {
 	UUID         uuid.UUID `json:"uuid"`
 }
 
-// PostMessageDTO 上报报文 结构体
+// PostMessageDTO 上行消息结构体
 type PostMessageDTO struct {
-	Type string              `json:"type"`
-	Data ZigbeeDeviceMessage `json:"data"`
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
+}
+
+// ReceiveMessageDTO 下行消息结构体
+type ReceiveMessageDTO struct {
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
 }
 
 // ZigbeeNode 设备节点
@@ -79,6 +85,5 @@ type PubHTTPInfo struct {
 type PubMQTTInfo struct {
 	Address string `json:"address"`
 	Port    uint16 `json:"port"`
-	ID      string `json:"id"`
 	Enable  bool   `json:"enable"`
 }

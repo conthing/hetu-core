@@ -5,6 +5,7 @@ import (
 	"hetu-core/ezsp"
 	"hetu-core/ezsp/zgb"
 	mqtt "hetu-core/mqtt/client"
+	"hetu-core/proxy"
 	"hetu-core/redis"
 	"hetu-core/router"
 	"os"
@@ -15,12 +16,13 @@ import (
 func main() {
 	config.Service()
 	redis.Connect()
+	redis.SubScribe(proxy.Post)
 	ezsp.InitEzspModule()
 	initInfo := redis.GetPubMQTTInfo()
 	mqtt.Init(initInfo)
+
 	errs := make(chan error, 3)
 	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)
-
 	go zgb.TickRunning(errs)
 
 	go router.Run(8080)

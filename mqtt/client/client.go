@@ -2,8 +2,10 @@ package client
 
 import (
 	"fmt"
+	"hetu-core/config"
 	"hetu-core/dto"
 	"sync"
+	"time"
 
 	"github.com/conthing/utils/common"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -17,11 +19,12 @@ func Init(info *dto.PubMQTTInfo) {
 	// 不会报 nil 错误
 	if info.Enable {
 		Connect(info)
+		// topic := fmt.Sprintf("/hetu/%s/command", config.Mac)
+		// Subscribe(topic)
 	}
 }
 
 // ReConnect 重新连接
-// 用写锁锁住
 func ReConnect(info *dto.PubMQTTInfo) {
 	rw.Lock()
 	client.Disconnect(100)
@@ -29,12 +32,12 @@ func ReConnect(info *dto.PubMQTTInfo) {
 	rw.Unlock()
 }
 
-// Connect 连接 id 可以是本机的 MAC
+// Connect 连接
 func Connect(info *dto.PubMQTTInfo) {
 	server := fmt.Sprintf("%s:%d", info.Address, info.Port)
 	opts := MQTT.NewClientOptions().AddBroker(server)
-	opts.SetClientID(info.ID)
-
+	// ClientID 无需配置
+	opts.SetClientID(config.Mac + time.Now().String())
 	client = MQTT.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		common.Log.Errorf("client连接失败:%s", token.Error())
