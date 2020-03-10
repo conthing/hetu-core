@@ -24,6 +24,7 @@ const (
 // Network Zigbee 网络控制
 type Network struct {
 	Command string
+	Channel uint8 `binding:"-"`
 }
 
 // Resp 回复

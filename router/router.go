@@ -13,6 +13,7 @@ func Run(port int) {
 	v1 := r.Group("/api/v1")
 	{
 		v1.PUT("/network", handler.NetworkHandler)
+		v1.GET("/network", handler.GetMeshInfo)
 		v1.GET("/nodes", handler.GetZigbeeNodes)
 		v1.GET("/nodes/:mac", handler.GetNodeLatestMessage)
 		v1.GET("/version", handler.GetVersionInfo)

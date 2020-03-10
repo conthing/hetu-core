@@ -2,6 +2,7 @@ package handler
 
 import (
 	"hetu-core/dto"
+	"hetu-core/ezsp/ezsp"
 	"hetu-core/ezsp/hetu"
 	"net/http"
 
@@ -46,7 +47,7 @@ func NetworkHandler(c *gin.Context) {
 		// -------------
 		c.JSON(http.StatusOK, &dto.Resp{Code: dto.Success, Message: "StopJoin"})
 	case "CreateZigbeeNet":
-		err = hetu.FormNetwork(0xff)
+		err = hetu.FormNetwork(net.Channel)
 		if err != nil {
 			c.JSON(http.StatusBadGateway, &dto.Resp{
 				Code:    dto.CreateZigbeeNetFailed,
@@ -72,4 +73,14 @@ func NetworkHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, &dto.Resp{Code: dto.InvalidJSON, Message: "invalid json"})
 	}
 
+}
+
+// GetMeshInfo 获取频道号
+func GetMeshInfo(c *gin.Context) {
+	if !ezsp.MeshStatusUp {
+		c.JSON(http.StatusBadRequest, "网络未开启")
+		return
+	}
+	messInfo := ezsp.MeshInfo
+	c.JSON(http.StatusOK, &messInfo)
 }
