@@ -25,7 +25,7 @@ func main() {
 	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)
 	go zgb.TickRunning(errs)
 
-	go router.Run(8080)
+	go router.Run(52040)
 
 	// recv error channel
 	c := <-errs
