@@ -2,10 +2,11 @@ package redis
 
 import (
 	"hetu-core/dto"
-	"hetu-core/ezsp/hetu"
 	"log"
 	"strconv"
 	"time"
+
+	"github.com/conthing/ezsp/hetu"
 
 	"github.com/conthing/utils/common"
 	"github.com/mediocregopher/radix/v3"

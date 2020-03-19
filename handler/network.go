@@ -2,9 +2,10 @@ package handler
 
 import (
 	"hetu-core/dto"
-	"hetu-core/ezsp/ezsp"
-	"hetu-core/ezsp/hetu"
 	"net/http"
+
+	"github.com/conthing/ezsp/ezsp"
+	"github.com/conthing/ezsp/hetu"
 
 	"github.com/conthing/utils/common"
 	"github.com/gin-gonic/gin"

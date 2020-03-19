@@ -2,14 +2,17 @@ package main
 
 import (
 	"hetu-core/config"
-	"hetu-core/ezsp"
-	"hetu-core/ezsp/zgb"
+	"hetu-core/handler"
 	mqtt "hetu-core/mqtt/client"
 	"hetu-core/proxy"
 	"hetu-core/redis"
 	"hetu-core/router"
 	"os"
 
+	"github.com/conthing/ezsp/zgb"
+
+	"github.com/conthing/ezsp/ash"
+	"github.com/conthing/ezsp/hetu"
 	"github.com/conthing/utils/common"
 )
 
@@ -17,7 +20,7 @@ func main() {
 	config.Service()
 	redis.Connect()
 	redis.Subscribe(proxy.Post)
-	ezsp.InitEzspModule()
+	InitEzspModule()
 	initInfo := redis.GetPubMQTTInfo()
 	mqtt.Init(initInfo, proxy.Down)
 
@@ -32,4 +35,27 @@ func main() {
 	common.Log.Errorf("terminating: %v", c)
 	os.Exit(0)
 
+}
+
+// InitEzspModule 初始化Ezsp
+func InitEzspModule() {
+	hetu.C4Callbacks = hetu.StC4Callbacks{
+		C4MessageSentHandler:     handler.SentMessage,
+		C4IncomingMessageHandler: handler.ReceiveMessage,
+		C4NodeStatusHandler:      handler.NodeStatus,
+	}
+
+	zgb.TraceSet(&config.Conf.TraceSettings)
+	zgb.NetworkSet(&config.Conf.NetworkSettings)
+
+	err := ash.AshSerialOpen(config.Conf.Serial.Name, config.Conf.Serial.Baud, config.Conf.Serial.RtsCts)
+	if err != nil {
+		common.Log.Errorf("failed to open serial %v", config.Conf.Serial.Name)
+	}
+
+	// Time it took to start service
+	common.Log.Infof("Open Serial success port=%s baud=%d", config.Conf.Serial.Name, config.Conf.Serial.Baud)
+	// 初始化 长短地址对应表
+	nodesMap := redis.ReadSaveZigbeeNodeTable()
+	hetu.LoadNodesMap(nodesMap)
 }

@@ -2,9 +2,10 @@ package config
 
 import (
 	"bytes"
-	"hetu-core/ezsp/zgb"
 	"io/ioutil"
 	"os"
+
+	"github.com/conthing/ezsp/zgb"
 
 	"github.com/conthing/utils/common"
 	"gopkg.in/yaml.v2"
