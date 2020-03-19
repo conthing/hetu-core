@@ -12,6 +12,7 @@ func Run(port int) {
 	r := gin.Default()
 	v1 := r.Group("/api/v1")
 	{
+		v1.GET("/ping", handler.Ping)
 		v1.PUT("/network", handler.NetworkHandler)
 		v1.GET("/network", handler.GetMeshInfo)
 		v1.GET("/nodes", handler.GetZigbeeNodes)
