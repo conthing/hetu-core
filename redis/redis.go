@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"hetu-core/config"
 	"hetu-core/dto"
 	"log"
 	"strconv"
@@ -28,6 +29,25 @@ func Connect() {
 		return
 	}
 	common.Log.Info("redis 启动成功")
+	// 初始化 host alias
+	alias, err := GetAlias()
+	if err != nil {
+		common.Log.Error("get alias failed", err)
+		return
+	}
+	if alias != "" {
+		// alias has been initialized.
+		return
+	}
+
+	Maclen := len(config.Mac)
+	subMac := config.Mac[Maclen-6 : Maclen]
+	err = SaveAlias("fortoo_" + subMac)
+	if err != nil {
+		common.Log.Error("init alias failed", err)
+		return
+	}
+
 }
 
 // SaveZigbeeNode @HMSET
