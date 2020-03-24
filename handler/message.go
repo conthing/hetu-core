@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/binary"
 	"encoding/json"
+	"hetu-core/config"
 	"hetu-core/dto"
 	"hetu-core/proxy"
 	"hetu-core/redis"
@@ -21,12 +22,19 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 		os.Exit(1)
 	}
 
+	alias, err := redis.GetAlias()
+	if err != nil {
+		common.Log.Error("read alias error: ", err)
+	}
+
 	m := dto.ZigbeeDeviceMessage{
 		UUID:         uuid.New(),
 		Message:      message,
 		Eui64:        eui64,
 		LastRecvTime: recvTime,
 		Addr:         binary.LittleEndian.Uint16(message),
+		HostMac:      config.Mac,
+		HostAlias:    alias,
 	}
 
 	// 上传报文

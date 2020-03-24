@@ -41,6 +41,8 @@ type ZigbeeDeviceMessage struct {
 	Message      []byte    `json:"message"`
 	LastRecvTime time.Time `json:"time"`
 	UUID         uuid.UUID `json:"uuid"`
+	HostMac      string    `json:"mac"`
+	HostAlias    string    `json:"alias"`
 }
 
 // PostMessageDTO 上行消息结构体
