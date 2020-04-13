@@ -101,7 +101,6 @@ func SaveZigbeeNode(node *dto.ZigbeeNode) {
 }
 
 // SaveZigbeeMessage 保存 ZigbeeMessage 信息
-// todo:设置过期时间
 func SaveZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
 	key := m.UUID.String()
 	err := Client.Do(radix.WithConn(key, func(c radix.Conn) error {
@@ -131,7 +130,7 @@ func SaveZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
 
 		macGroupKey := "mac2uuid:" + strconv.FormatUint(m.Eui64, 16)
 
-		if err = c.Do(radix.Cmd(nil, "RPUSH", macGroupKey, key)); err != nil {
+		if err = c.Do(radix.Cmd(nil, "LPUSH", macGroupKey, key)); err != nil {
 			return err
 		}
 
@@ -150,6 +149,37 @@ func SaveZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
 		common.Log.Error("保存 Zigbee Message 失败")
 	}
 	common.Log.Info("[ok] 保存 Zigbee Message 成功")
+}
+
+// TrimZigbeeMessage 剔除老旧数据
+// 容量2700
+func TrimZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
+	var res []string
+	macGroupKey := "mac2uuid:" + strconv.FormatUint(m.Eui64, 16)
+	err := Client.Do(radix.Cmd(&res, "LRANGE", macGroupKey, "0", "-1"))
+	if err != nil {
+		common.Log.Error("TrimZigbeeMessage LRANGE error: ", err)
+		return
+	}
+
+	common.Log.Info(res, len(res))
+	if len(res) <= 2700 {
+		return
+	}
+	var popUUID string
+	err = Client.Do(radix.Cmd(&popUUID, "RPOP", macGroupKey))
+	if err != nil {
+		common.Log.Error("TrimZigbeeMessage LPOP error: ", err)
+		return
+	}
+
+	err = Client.Do(radix.Cmd(nil, "DEL", popUUID))
+	if err != nil {
+		common.Log.Error("TrimZigbeeMessage DEL error: ", err)
+		return
+	}
+	common.Log.Info("[success] TrimZigbeeMessage")
+
 }
 
 // ReadSaveZigbeeNodeTable @set
@@ -239,21 +269,21 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 }
 
 // GetNodeLatestMessage 获取节点的最新message 根据 eui64
+// todo 修改获取队头元素策略
 func GetNodeLatestMessage(mac string) (*dto.ZigbeeDeviceMessage, error) {
 
 	// Stage 1 获取 uuid
-	var res []string
+	var latestUUID string
 	macGroupKey := "mac2uuid:" + mac
-	err := Client.Do(radix.Cmd(&res, "LRANGE", macGroupKey, "-1", "-1"))
+	err := Client.Do(radix.Cmd(&latestUUID, "LINDEX", macGroupKey, "0"))
 	if err != nil {
 		common.Log.Error("读取 uuid 错误", err)
 		return nil, err
 	}
 
 	// Stage 2 获取 message
-	uuid := res[0]
 	var message dto.ZigbeeDeviceMessage
-	err = Client.Do(radix.Cmd(&message, "HGETALL", uuid))
+	err = Client.Do(radix.Cmd(&message, "HGETALL", latestUUID))
 	if err != nil {
 		common.Log.Error("获取 message 错误", err)
 		return nil, err

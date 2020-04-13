@@ -49,6 +49,8 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 	// 持久化 Message
 	redis.SaveZigbeeMessage(&m)
 
+	// 清理多余数据
+	redis.TrimZigbeeMessage(&m)
 }
 
 // NodeStatus 离线、上线
