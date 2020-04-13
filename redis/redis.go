@@ -101,6 +101,7 @@ func SaveZigbeeNode(node *dto.ZigbeeNode) {
 }
 
 // SaveZigbeeMessage 保存 ZigbeeMessage 信息
+// todo:设置过期时间
 func SaveZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
 	key := m.UUID.String()
 	err := Client.Do(radix.WithConn(key, func(c radix.Conn) error {

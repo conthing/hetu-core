@@ -30,6 +30,7 @@ func Down(rm *dto.ReceiveMessageDTO) {
 }
 
 // Post 上行消息
+// todo:失败放进队列中
 func Post(data []byte) {
 
 	httpInfo := redis.GetPubHTTPInfo()
