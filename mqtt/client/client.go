@@ -63,15 +63,16 @@ func Connect(info *dto.PubMQTTInfo) {
 
 // Publish 发布消息
 // 读锁锁住
-func Publish(topic string, payload interface{}) {
+func Publish(topic string, payload interface{}) error {
 	rw.RLock()
 	err := client.Publish(topic, 0, false, payload).Error()
 	rw.RUnlock()
 	if err != nil {
 		common.Log.Error("mqtt 发送失败")
-		return
+		return err
 	}
 	common.Log.Infof("topic:%s 发布成功", topic)
+	return nil
 }
 
 // Subscribe 订阅消息

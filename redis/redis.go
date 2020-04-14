@@ -88,7 +88,7 @@ func SaveZigbeeNode(node *dto.ZigbeeNode) {
 			return err
 		}
 
-		common.Log.Info("[ok] 保存 Zigbee 节点成功")
+		// common.Log.Info("[ok] 保存 Zigbee 节点成功")
 		// capture the output of the first transaction command, i.e. the GET
 		return nil
 
@@ -148,7 +148,6 @@ func SaveZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
 	if err != nil {
 		common.Log.Error("保存 Zigbee Message 失败")
 	}
-	common.Log.Info("[ok] 保存 Zigbee Message 成功")
 }
 
 // TrimZigbeeMessage 剔除老旧数据
@@ -162,14 +161,13 @@ func TrimZigbeeMessage(m *dto.ZigbeeDeviceMessage) {
 		return
 	}
 
-	common.Log.Info(res, len(res))
 	if len(res) <= 2700 {
 		return
 	}
 	var popUUID string
 	err = Client.Do(radix.Cmd(&popUUID, "RPOP", macGroupKey))
 	if err != nil {
-		common.Log.Error("TrimZigbeeMessage LPOP error: ", err)
+		common.Log.Error("TrimZigbeeMessage RPOP error: ", err)
 		return
 	}
 

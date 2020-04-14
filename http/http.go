@@ -11,19 +11,20 @@ import (
 )
 
 // Publish 上报
-func Publish(info *dto.PubHTTPInfo, mJSON []byte) {
+func Publish(info *dto.PubHTTPInfo, mJSON []byte) error {
 	url := fmt.Sprintf("%s:%d%s", info.Address, info.Port, info.URL)
 	buf := bytes.NewBuffer(mJSON)
 	resp, err := gohttp.Post(url, "application/json", buf)
 	if err != nil {
 		common.Log.Error("HTTP 上报失败", err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
 	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		common.Log.Error("HTTP 上报失败", err)
-		return
+		return err
 	}
 	common.Log.Info("HTTP 上报成功")
+	return nil
 }
