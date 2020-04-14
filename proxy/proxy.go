@@ -30,18 +30,29 @@ func Down(rm *dto.ReceiveMessageDTO) {
 }
 
 // Post 上行消息
-// todo:失败放进队列中
-func Post(data []byte) {
+func Post(data []byte) error {
 
 	httpInfo := redis.GetPubHTTPInfo()
 	if httpInfo.Enable {
-		http.Publish(httpInfo, data)
+		err := http.Publish(httpInfo, data)
+		if err != nil {
+			// PushBack实现失败重传
+			redis.RPushBackupQueue(string(data))
+			return err
+		}
 	}
 
 	mqttInfo := redis.GetPubMQTTInfo()
 	if mqttInfo.Enable {
 		topic := "/hetu/" + config.Mac + "/report"
-		mqtt.Publish(topic, data)
+		err := mqtt.Publish(topic, data)
+		if err != nil {
+			common.Log.Error("[MQTT] Post data failed", err)
+			return err
+		}
 	}
+
+	redis.TrimBackupQueue()
+	return nil
 
 }

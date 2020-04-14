@@ -1,6 +1,7 @@
 package main
 
 import (
+	"hetu-core/backup"
 	"hetu-core/config"
 	"hetu-core/handler"
 	mqtt "hetu-core/mqtt/client"
@@ -27,7 +28,7 @@ func main() {
 	errs := make(chan error, 3)
 	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)
 	go zgb.TickRunning(errs)
-
+	go backup.ConsumeBackupQueue()
 	go router.Run(52040)
 
 	// recv error channel

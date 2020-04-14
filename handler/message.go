@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"hetu-core/config"
 	"hetu-core/dto"
-	"hetu-core/proxy"
 	"hetu-core/redis"
 	"os"
 	"time"
@@ -37,18 +36,21 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 		HostAlias:    alias,
 	}
 
-	// 上传报文
+	// 序列化
 	pm := dto.PostMessageDTO{Type: "zigbee", Data: m}
 	pmJSON, err := json.Marshal(pm)
 	if err != nil {
 		common.Log.Error("序列化错误")
 		return
 	}
-	proxy.Post(pmJSON)
+	// 增加到备份队列
+	redis.AddToBackupQueue(pmJSON)
 
 	// 持久化 Message
 	redis.SaveZigbeeMessage(&m)
 
+	// 清理多余数据
+	redis.TrimZigbeeMessage(&m)
 }
 
 // NodeStatus 离线、上线

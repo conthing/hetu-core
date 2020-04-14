@@ -27,7 +27,7 @@ func Publish(topic string, data []byte) {
 }
 
 // Subscribe redis 队列订阅消息
-func Subscribe(fn func(data []byte)) {
+func Subscribe(fn func(data []byte) error) {
 	msgCh := make(chan radix.PubSubMessage)
 	if err := _pubSubConn.Subscribe(msgCh, "hetu-core"); err != nil {
 		common.Log.Error("redis 队列订阅失败", err)
