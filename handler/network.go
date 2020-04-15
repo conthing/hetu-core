@@ -89,7 +89,7 @@ func NetworkHandler(c *gin.Context) {
 // GetMeshInfo 获取频道号
 func GetMeshInfo(c *gin.Context) {
 	if !ezsp.MeshStatusUp {
-		c.JSON(http.StatusBadRequest, "GET Mesh Error")
+		c.JSON(http.StatusBadRequest, "GET Mesh Error, !ezsp.MeshStatusUp")
 		return
 	}
 	messInfo := ezsp.MeshInfo
