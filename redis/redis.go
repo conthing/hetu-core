@@ -240,7 +240,7 @@ func ReadSaveZigbeeNodeTable() map[uint64]hetu.StNode {
 // DeleteNodeList 删除网络节点
 func DeleteNodeList() error {
 	key := "ZigbeeNodeSet"
-	err := Client.Do(radix.Cmd(nil, "delete", key))
+	err := Client.Do(radix.Cmd(nil, "DEL", key))
 	if err != nil {
 		common.Log.Error("failed to delete ZigbeeNodeSet ", err)
 		return err
