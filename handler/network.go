@@ -2,6 +2,7 @@ package handler
 
 import (
 	"hetu-core/dto"
+	"hetu-core/redis"
 	"net/http"
 
 	"github.com/conthing/ezsp/ezsp"
@@ -61,7 +62,16 @@ func NetworkHandler(c *gin.Context) {
 	case "RemoveZigbeeNet":
 		err = hetu.RemoveNetwork()
 		if err != nil {
-			c.JSON(http.StatusBadGateway, &dto.Resp{
+			c.JSON(http.StatusInternalServerError, &dto.Resp{
+				Code:    dto.RemoveZigbeeNetFailed,
+				Message: "RemoveZigbeeNet Failed",
+			})
+			common.Log.Errorf("RemoveZigbeeNet failed: %v", err)
+			return
+		}
+		err = redis.DeleteNodeList()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, &dto.Resp{
 				Code:    dto.RemoveZigbeeNetFailed,
 				Message: "RemoveZigbeeNet Failed",
 			})

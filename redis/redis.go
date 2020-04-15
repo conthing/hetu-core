@@ -237,6 +237,18 @@ func ReadSaveZigbeeNodeTable() map[uint64]hetu.StNode {
 	return nodesMap
 }
 
+// DeleteNodeList 删除网络节点
+func DeleteNodeList() error {
+	key := "ZigbeeNodeSet"
+	err := Client.Do(radix.Cmd(nil, "delete", key))
+	if err != nil {
+		common.Log.Error("failed to delete ZigbeeNodeSet ", err)
+		return err
+	}
+	return nil
+
+}
+
 // GetNodeList 获取节点列表
 func GetNodeList() ([]dto.ZigbeeNode, error) {
 	NodeList := make([]dto.ZigbeeNode, 0)
@@ -248,7 +260,6 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 		common.Log.Error("读取节点表失败", err)
 		return nil, err
 	}
-	common.Log.Info("[PART 1] 读取节点列表成功")
 
 	// PART 2 加载节点列表
 	NodeList = make([]dto.ZigbeeNode, len(ZigbeeNodeList))
@@ -262,7 +273,6 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 		common.Log.Error("加载节点列表失败", err)
 		return nil, err
 	}
-	common.Log.Info("[PART 2] 加载节点列表成功", NodeList)
 	return NodeList, nil
 }
 
