@@ -51,10 +51,16 @@ type PostMessageDTO struct {
 	Data interface{} `json:"data"`
 }
 
+// UnicastData 单波发送报文结构体
+type UnicastData struct {
+	Eui64   uint64 `json:"eui64"`
+	Message []byte `json:"message"`
+}
+
 // ReceiveMessageDTO 下行消息结构体
 type ReceiveMessageDTO struct {
 	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+	Data UnicastData `json:"data"`
 }
 
 // ZigbeeNode 设备节点
