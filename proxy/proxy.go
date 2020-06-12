@@ -8,6 +8,7 @@ import (
 	mqtt "hetu-core/mqtt/client"
 	"hetu-core/redis"
 
+	"github.com/conthing/ezsp/hetu"
 	"github.com/conthing/utils/common"
 )
 
@@ -15,8 +16,10 @@ import (
 func Down(rm *dto.ReceiveMessageDTO) {
 	if rm.Type == "zigbee" {
 		// 底层发送 zigbee 报文
-		common.Log.Info("TODO: 底层报文下发")
-		// todo
+		err := hetu.SendUnicast(rm.Data.Eui64, rm.Data.Message)
+		if err != nil {
+			common.Log.Error("[FAILED to hetu SendUnicast: ", err)
+		}
 	} else {
 		rmJSON, err := json.Marshal(rm)
 		if err != nil {
