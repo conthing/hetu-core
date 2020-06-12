@@ -2,8 +2,6 @@ package backup
 
 import (
 	"time"
-
-	"github.com/conthing/utils/common"
 )
 
 // superviseWorkern 监督工人
@@ -18,7 +16,7 @@ func superviseWorker(next chan bool, done chan bool, fail chan bool) {
 			next <- true
 		case <-fail:
 			// 等待 5 秒再进行下一个工作
-			common.Log.Error("等待 5 秒再进行下一个工作")
+			//common.Log.Error("等待 5 秒再进行下一个工作")
 			time.Sleep(time.Second * 5)
 			next <- true
 		}

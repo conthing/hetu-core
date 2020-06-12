@@ -40,10 +40,10 @@ func main() {
 
 // InitEzspModule 初始化Ezsp
 func InitEzspModule() {
-	hetu.C4Callbacks = hetu.StC4Callbacks{
-		C4MessageSentHandler:     handler.SentMessage,
-		C4IncomingMessageHandler: handler.ReceiveMessage,
-		C4NodeStatusHandler:      handler.NodeStatus,
+	hetu.HetuCallbacks = hetu.StHetuCallbacks{
+		HetuMessageSentHandler:     handler.SentMessage,
+		HetuIncomingMessageHandler: handler.ReceiveMessage,
+		HetuNodeStatusHandler:      handler.NodeStatus,
 	}
 
 	zgb.TraceSet(&config.Conf.TraceSettings)
