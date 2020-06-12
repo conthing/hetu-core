@@ -32,7 +32,7 @@ func GetZigbeeNodes(c *gin.Context) {
 
 type latestMessageInfo struct {
 	Info         string `json:"info"`
-	LastRecvTime string `json:"last"`
+	LastRecvTime string `json:"lastRecvTime"`
 }
 
 // GetNodeLatestMessage 获取最新的Node
