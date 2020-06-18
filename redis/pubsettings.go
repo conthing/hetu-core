@@ -20,7 +20,6 @@ func SavePubHTTP(info *dto.PubHTTPInfo) error {
 	return nil
 }
 
-// todo 出错要返回error
 // GetPubHTTPInfo 获取 PubHTTPInfo
 func GetPubHTTPInfo() *dto.PubHTTPInfo {
 	key := "PubHTTPInfo"
