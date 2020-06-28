@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,6 +45,14 @@ type ZigbeeDeviceMessage struct {
 	UUID         uuid.UUID `json:"uuid"`
 	HostMac      string    `json:"mac"`
 	HostAlias    string    `json:"alias"`
+}
+
+func (m *ZigbeeDeviceMessage) String() (string, error) {
+	array, err := json.Marshal(m)
+	if err != nil {
+		return "", fmt.Errorf("Marshal:%w", err)
+	}
+	return string(array), nil
 }
 
 // PostMessageDTO 上行消息结构体

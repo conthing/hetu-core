@@ -47,10 +47,10 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 	redis.AddToBackupQueue(pmJSON)
 
 	// 持久化 Message
-	redis.SaveZigbeeMessage(&m)
+	redis.AddToZigbeeMessageQueue(&m)
 
 	// 清理多余数据
-	redis.TrimZigbeeMessage(&m)
+	redis.TrimZigbeeMessageQueue(&m)
 }
 
 // NodeStatus 离线、上线
