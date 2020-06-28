@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"encoding/json"
+	"fmt"
 	"hetu-core/config"
 	"hetu-core/dto"
 	"log"
@@ -230,12 +232,16 @@ func GetNodeList() ([]dto.ZigbeeNode, error) {
 
 // GetNodeLatestMessage 获取节点的最新message 根据16进制的mac
 func GetNodeLatestMessage(mac string) (*dto.ZigbeeDeviceMessage, error) {
-	var dto *dto.ZigbeeDeviceMessage
-	err := Client.Do(radix.Cmd(&dto, "LINDEX", zigbeeMessageQueue+mac, "0"))
+	var dto dto.ZigbeeDeviceMessage
+	var str string
+	err := Client.Do(radix.Cmd(&str, "LINDEX", zigbeeMessageQueue+mac, "0"))
 	if err != nil {
-		common.Log.Error("LINDEX:", err)
-		return nil, err
+		return nil, fmt.Errorf("LINDEX:%w", err)
+	}
+	err = json.Unmarshal([]byte(str), &dto)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal:%w", err)
 	}
 	common.Log.Info("获取节点的最新 message 成功")
-	return dto, nil
+	return &dto, nil
 }
