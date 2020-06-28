@@ -30,6 +30,11 @@ func GetZigbeeNodes(c *gin.Context) {
 	})
 }
 
+type latestMessageInfo struct {
+	Info         string `json:"info"`
+	LastRecvTime string `json:"lastRecvTime"`
+}
+
 // GetNodeLatestMessage 获取最新的Node
 func GetNodeLatestMessage(c *gin.Context) {
 	mac := c.Param("mac")
@@ -47,7 +52,10 @@ func GetNodeLatestMessage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, dto.Resp{
 		Code: dto.Success,
-		Data: str,
+		Data: latestMessageInfo{
+			Info:         str,
+			LastRecvTime: message.LastRecvTime.Format("2006-01-02 15:04:05"),
+		},
 	})
 
 }

@@ -21,7 +21,7 @@ func working(next chan bool, done chan bool, fail chan bool) {
 func consumeMessage(done chan bool, fail chan bool) {
 	res, err := redis.ReadBackupQueue()
 	if err != nil {
-		common.Log.Error("read queue tail failed", err)
+		common.Log.Error("read queue tail failed: ", err)
 		fail <- true
 		return
 	}
