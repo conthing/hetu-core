@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/binary"
 	"encoding/json"
-	"hetu-core/config"
 	"hetu-core/dto"
 	"hetu-core/redis"
 	"os"
@@ -32,7 +31,7 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 		Eui64:        eui64,
 		LastRecvTime: recvTime,
 		Addr:         binary.LittleEndian.Uint16(message),
-		HostMac:      config.Mac,
+		HostMac:      common.GetSerialNumber(),
 		HostAlias:    alias,
 	}
 

@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"hetu-core/config"
 	"hetu-core/dto"
 	"sync"
 	"time"
@@ -20,7 +19,7 @@ func Init(info *dto.PubMQTTInfo, down func(rm *dto.ReceiveMessageDTO)) {
 	// 不会报 nil 错误
 	if info.Enable {
 		Connect(info)
-		topic := fmt.Sprintf("/hetu/%s/command", config.Mac)
+		topic := fmt.Sprintf("/hetu/%s/command", common.GetSerialNumber())
 
 		fn := func(client MQTT.Client, message MQTT.Message) {
 			common.Log.Infof("MQTT 订阅消息报文 [%s]", message.Topic())
@@ -54,7 +53,7 @@ func Connect(info *dto.PubMQTTInfo) {
 	server := fmt.Sprintf("%s:%d", info.Address, info.Port)
 	opts := MQTT.NewClientOptions().AddBroker(server)
 	// ClientID 无需配置
-	opts.SetClientID(config.Mac + time.Now().String())
+	opts.SetClientID(common.GetSerialNumber() + time.Now().String())
 	client = MQTT.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		common.Log.Errorf("client连接失败:%s", token.Error())

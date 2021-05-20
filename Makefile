@@ -5,7 +5,7 @@
 # make ARCH=arm 构建arm程序，对应OS为linux
 # make ARCH=amd64 构建amd64程序，对应OS为宿主机OS
 
-USECGO=0
+USECGO=1
 USEZMQ=0
 
 #EXTRAFILE_amd64windows=driver/lib/amd64windows/WTY.dll driver/lib/amd64windows/WT_H264.dll driver/lib/amd64windows/TH_PLATEID.dll

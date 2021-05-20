@@ -3,7 +3,6 @@ package redis
 import (
 	"encoding/json"
 	"fmt"
-	"hetu-core/config"
 	"hetu-core/dto"
 	"log"
 	"strconv"
@@ -42,8 +41,9 @@ func Connect() {
 		return
 	}
 
-	Maclen := len(config.Mac)
-	subMac := config.Mac[Maclen-6 : Maclen]
+	mac := common.GetSerialNumber()
+	Maclen := len(mac)
+	subMac := mac[Maclen-6 : Maclen]
 	err = SaveAlias("fortoo_" + subMac)
 	if err != nil {
 		common.Log.Error("init alias failed", err)

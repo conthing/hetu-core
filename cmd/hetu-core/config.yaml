@@ -1,16 +1,22 @@
-serial:
-  name: COM3
-  baud: 57600
-  rtscts: false
-trace_settings:
-  ashframetraceon: false
-  ashtraceon: false
-  ezspframetraceon: false
-  ezspapitraceon: false
-  ezspcallbacktraceon: true
-  ncptraceon: true
-  ncpformtraceon: true
-  ncpsourceroutetraceon: false
-network_settings:
-  networktype: hetu
-  securitylevel: 0
+http:
+  port: 52040
+ezsp:
+  serial:
+    name: /dev/ttymxc1
+    baud: 115200
+    rtscts: true
+  trace_settings:
+    ashframetraceon: false
+    ashtraceon: false
+    ezspframetraceon: false
+    ezspapitraceon: false
+    ezspcallbacktraceon: true
+    ncptraceon: true
+    ncpformtraceon: true
+    ncpsourceroutetraceon: true
+  network_settings:
+    networktype: hetu
+    securitylevel: 0
+db:
+  location: "/app/data/"
+  dbname: "hetu"

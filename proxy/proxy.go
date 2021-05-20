@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"encoding/json"
-	"hetu-core/config"
 	"hetu-core/dto"
 	"hetu-core/http"
 	mqtt "hetu-core/mqtt/client"
@@ -47,7 +46,7 @@ func Post(data []byte) error {
 
 	mqttInfo := redis.GetPubMQTTInfo()
 	if mqttInfo.Enable {
-		topic := "/hetu/" + config.Mac + "/report"
+		topic := "/hetu/" + common.GetSerialNumber() + "/report"
 		err := mqtt.Publish(topic, data)
 		if err != nil {
 			common.Log.Error("[MQTT] Post data failed", err)
