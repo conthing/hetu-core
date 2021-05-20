@@ -67,7 +67,7 @@ func NodeStatus(eui64 uint64, nodeID uint16, status byte, addr byte) {
 		Addr:   addr,
 	}
 
-	redis.SaveZigbeeNode(node)
+	redis.SaveZigbeeNode(node) // 只有在zigbee节点状态发生变化时才更新节点表
 
 }
 

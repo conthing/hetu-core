@@ -40,7 +40,7 @@ func Post(data []byte) error {
 		err := http.Publish(httpInfo, data)
 		if err != nil {
 			// PushBack实现失败重传
-			redis.RPushBackupQueue(string(data))
+			redis.RPushBackupQueue(string(data)) // todo 为什么只有HTTP这里会pushback？
 			return err
 		}
 	}

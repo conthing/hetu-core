@@ -32,7 +32,7 @@ func Connect() {
 	}
 	common.Log.Info("redis 启动成功")
 	// 初始化 host alias
-	alias, err := GetAlias()
+	alias, err := GetAlias() // todo redis慢热，这里会启动失败，导致zigbee节点没有同步到ezsp
 	if err != nil {
 		common.Log.Error("get alias failed", err)
 		return

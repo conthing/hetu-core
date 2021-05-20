@@ -26,7 +26,7 @@ func consumeMessage(done chan bool, fail chan bool) {
 		return
 	}
 
-	err = proxy.Post([]byte(res[1]))
+	err = proxy.Post([]byte(res[1])) // TODO 为什么下标是1？
 	if err != nil {
 		fail <- true
 		return
