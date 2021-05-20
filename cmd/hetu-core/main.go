@@ -102,7 +102,7 @@ func main() {
 
 	go zgb.TickRunning(errs)
 	go backup.ConsumeBackupQueue()
-	go router.Run(52040)
+	go router.Run(config.HTTP.Port)
 
 	// recv error channel
 	c := <-errs
