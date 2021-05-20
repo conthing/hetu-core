@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hetu-core/dto"
-	"log"
 	"strconv"
 	"time"
 
@@ -18,38 +17,24 @@ import (
 var Client *radix.Pool
 
 // Connect 初始化连接池
-func Connect() {
-	var err error
+func Connect() (err error) {
 	Client, err = radix.NewPool("tcp", "127.0.0.1:6379", 10)
 	if err != nil {
-		log.Fatal("数据库连接失败", err)
+		return
 	}
 	err = InitPubSubConn()
 	if err != nil {
-		common.Log.Error("pubsub 连接失败", err)
 		return
 	}
-	common.Log.Info("redis 启动成功")
-	// 初始化 host alias
-	alias, err := GetAlias() // todo redis慢热，这里会启动失败，导致zigbee节点没有同步到ezsp
+	// redis慢热，导致zigbee节点没有同步到ezsp，这里在初始化时增加一个读取，如果出错不运行下去
+	ZigbeeNodeList := make([]string, 0)
+	err = Client.Do(radix.Cmd(&ZigbeeNodeList, "smembers", "ZigbeeNodeSet"))
 	if err != nil {
-		common.Log.Error("get alias failed", err)
-		return
+		//if strings.Contains(err.Error(),"LOADING") {
+		return err
+		//}
 	}
-	if alias != "" {
-		// alias has been initialized.
-		return
-	}
-
-	mac := common.GetSerialNumber()
-	Maclen := len(mac)
-	subMac := mac[Maclen-6 : Maclen]
-	err = SaveAlias("fortoo_" + subMac)
-	if err != nil {
-		common.Log.Error("init alias failed", err)
-		return
-	}
-
+	return nil
 }
 
 // SaveZigbeeNode @HMSET
@@ -102,7 +87,7 @@ func SaveZigbeeNode(node *dto.ZigbeeNode) {
 
 }
 
-const zigbeeMessageQueue = "zigbee_message_queue"
+const zigbeeMessageQueue = "zigbee_message_queue" // todo 为什么trim保持64个，读却只读一个
 
 // AddToZigbeeMessageQueue 加入 ZigbeeMessage 队列头部
 func AddToZigbeeMessageQueue(m *dto.ZigbeeDeviceMessage) {

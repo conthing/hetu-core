@@ -48,21 +48,6 @@ type HTTPConfig struct {
 var config = Config{}
 
 func boot(_ interface{}) (needRetry bool, err error) {
-	var cfgfile string
-
-	// todo 失败重试这里会出错
-	// 解析命令行参数 -c <dir>
-	flag.StringVar(&cfgfile, "c", "config.yaml", "Specify a config file other than default.")
-	flag.Parse()
-
-	common.InitLogger(&common.LoggerConfig{Level: "DEBUG", SkipCaller: true})
-	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)
-
-	err = common.LoadYaml(cfgfile, &config)
-	if err != nil {
-		return false, fmt.Errorf("Failed to load config %w", err)
-	}
-	common.Log.Infof("Load config success %+v", config)
 
 	// 初始化数据库
 	err = db.Init(&config.DB)
@@ -71,15 +56,36 @@ func boot(_ interface{}) (needRetry bool, err error) {
 	}
 	common.Log.Debug("database init success")
 
+	err = redis.Connect()
+	if err != nil {
+		return true, fmt.Errorf("failed to init redis: %v", err)
+	}
+	common.Log.Debug("redis init success")
+
 	return
 }
 
 func main() {
-	if common.Bootstrap(boot, nil, 1000, 500) != nil {
+	var cfgfile string
+
+	// 解析命令行参数 -c <dir>
+	flag.StringVar(&cfgfile, "c", "config.yaml", "Specify a config file other than default.")
+	flag.Parse()
+
+	common.InitLogger(&common.LoggerConfig{Level: "DEBUG", SkipCaller: true})
+	common.Log.Infof("VERSION %s build at %s", common.Version, common.BuildTime)
+
+	err := common.LoadYaml(cfgfile, &config)
+	if err != nil {
+		common.Log.Errorf("Failed to load config %w", err)
+		os.Exit(1)
+	}
+	common.Log.Infof("Load config success %+v", config)
+
+	if common.Bootstrap(boot, nil, 30000, 1000) != nil {
 		return
 	}
 
-	redis.Connect()
 	redis.Subscribe(proxy.Post)
 	InitEzspModule(&config.Ezsp)
 	initInfo := redis.GetPubMQTTInfo()

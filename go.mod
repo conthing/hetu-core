@@ -3,7 +3,7 @@ module hetu-core
 go 1.14
 
 require (
-	github.com/conthing/ezsp v0.0.0-20210115032800-6a436027a863
+	github.com/conthing/ezsp v0.0.0-20210520062110-bf9f79c0968e
 	github.com/conthing/utils v0.0.0-20210409053509-e733458fa3f7
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/gin-gonic/gin v1.6.2

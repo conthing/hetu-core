@@ -5,12 +5,18 @@ import (
 	"encoding/json"
 	"hetu-core/dto"
 	"hetu-core/redis"
+	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/conthing/utils/common"
 	"github.com/google/uuid"
 )
+
+func GetAlias() (string, error) {
+	data, err := ioutil.ReadFile("/app/data/.alias")
+	return string(data), err
+}
 
 // ReceiveMessage 接收到 Zigbee 报文
 func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
@@ -20,7 +26,7 @@ func ReceiveMessage(eui64 uint64, message []byte, recvTime time.Time) {
 		os.Exit(1)
 	}
 
-	alias, err := redis.GetAlias()
+	alias, err := GetAlias()
 	if err != nil {
 		common.Log.Error("read alias error: ", err)
 	}

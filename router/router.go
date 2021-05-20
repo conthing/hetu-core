@@ -27,11 +27,6 @@ func Run(port int) {
 
 		// 指令接受
 		v1.POST("/command", handler.HandleCommand)
-
-		// 可以设置其他
-		// v1.GET("/alias", handler.GetAlias)
-		// v1.POST("/alias", handler.SetAlias)
-
 	}
 	r.Run(fmt.Sprintf(":%d", port))
 }
