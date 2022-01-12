@@ -230,3 +230,14 @@ func GetNodeLatestMessage(mac string) (*dto.ZigbeeDeviceMessage, error) {
 	common.Log.Info("获取节点的最新 message 成功")
 	return &dto, nil
 }
+
+func DeleteNode(mac string) error {
+	key := "ZigbeeNodeSet"
+	err := Client.Do(radix.Cmd(nil, "srem", key, mac))
+	if err != nil {
+		common.Log.Errorf("delete node failed: %v", err)
+		return err
+	}
+
+	return nil
+}

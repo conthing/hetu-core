@@ -59,3 +59,22 @@ func GetNodeLatestMessage(c *gin.Context) {
 	})
 
 }
+
+// GetNodeLatestMessage 获取最新的Node
+func DeleteNode(c *gin.Context) {
+	mac := c.Param("mac")
+	err := redis.DeleteNode(mac)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, dto.Resp{
+			Code:    dto.DeleteNodeFailed,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.Resp{
+		Code: dto.Success,
+	})
+
+}

@@ -1,11 +1,21 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/conthing/utils/common"
 	"gorm.io/gorm"
 )
+
+func GetEnviorList() ([]Envior, error) {
+	list := make([]Envior, 0)
+	err := dbClient.Find(&list).Error
+	if err != nil {
+		return nil, fmt.Errorf("dbClient.Find Envior list failed: %w", err)
+	}
+	return list, nil
+}
 
 // 根据obj的可识别字段找到
 func getEnviorEntry(obj *Envior) (tx *gorm.DB) {
@@ -48,11 +58,7 @@ func SetEnvior(obj *Envior) error {
 
 // DeleteEnvior
 func DeleteEnvior(obj *Envior) error {
-	err := getEnviorEntry(obj).First(obj).Error
-	if err != nil {
-		return fmt.Errorf("Couldn't find deleting envior: %w", err)
-	}
-	err = dbClient.Unscoped().Delete(obj).Error
+	err := getEnviorEntry(obj).First(obj).Unscoped().Delete(obj).Error
 	if err != nil {
 		return fmt.Errorf("dbClient.Delete envior failed:%w", err)
 	}
@@ -66,7 +72,9 @@ func GetEnv(name string) string {
 	}
 	obj := &Envior{Name: name}
 	if err := GetEnvior(obj); err != nil {
-		common.Log.Errorf("GetEnvior %q failed: %v", name, err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) { //是not found错误，不输出日志
+			common.Log.Errorf("GetEnvior %q failed: %v", name, err)
+		}
 		return ""
 	}
 	return obj.Value
@@ -80,8 +88,10 @@ func SetEnv(name string, value string) error {
 	obj := &Envior{Name: name, Value: value}
 	if value == "" {
 		if err := DeleteEnvior(obj); err != nil {
-			common.Log.Errorf("Delete Envior %q failed: %v", name, err)
-			return err
+			if !errors.Is(err, gorm.ErrRecordNotFound) { //是not found错误，不输出日志
+				common.Log.Errorf("Delete Envior %q failed: %v", name, err)
+				return err
+			}
 		}
 	} else {
 		if err := SetEnvior(obj); err != nil {

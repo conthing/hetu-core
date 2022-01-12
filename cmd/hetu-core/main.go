@@ -77,7 +77,7 @@ func main() {
 
 	err := common.LoadYaml(cfgfile, &config)
 	if err != nil {
-		common.Log.Errorf("Failed to load config %w", err)
+		common.Log.Errorf("Failed to load config %v", err)
 		os.Exit(1)
 	}
 	common.Log.Infof("Load config success %+v", config)
